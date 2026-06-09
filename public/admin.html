@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crowdpick — Admin</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #111; color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 30px 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 1.6rem; margin-bottom: 6px; }
+    p.sub { color: #555; font-size: 0.85rem; margin-bottom: 24px; }
+    label { display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 6px; margin-top: 16px; }
+    input[type="text"], input[type="password"], input[type="url"], input[type="number"], select {
+      width: 100%; background: #222; border: 1px solid #333;
+      color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 0.95rem;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--accent, #6C63FF); }
+    select { cursor: pointer; }
+    select option { background: #222; }
+
+    /* Collapsible */
+    .collapsible { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+    .collapsible-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; cursor: pointer; user-select: none; }
+    .collapsible-header:hover { background: #222; }
+    .collapsible-title { font-size: 0.9rem; font-weight: 600; }
+    .collapsible-arrow { font-size: 0.8rem; color: #555; transition: transform 0.25s; }
+    .collapsible.open .collapsible-arrow { transform: rotate(180deg); }
+    .collapsible-body { display: none; padding: 0 18px 18px; border-top: 1px solid #2a2a2a; }
+    .collapsible.open .collapsible-body { display: block; }
+
+    /* Colores */
+    .color-row { display: flex; align-items: center; gap: 10px; }
+    .color-row input[type="color"] { width: 44px; height: 44px; padding: 2px; border-radius: 8px; border: 1px solid #333; background: #222; cursor: pointer; flex-shrink: 0; }
+    .color-row input[type="text"] { flex: 1; }
+
+    /* Logo */
+    .logo-tabs { display: flex; gap: 8px; margin-top: 16px; margin-bottom: 12px; }
+    .logo-tab { background: #1a1a1a; border: 1px solid #333; color: #aaa; padding: 7px 16px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; }
+    .logo-tab.active { border-color: var(--accent, #6C63FF); color: var(--accent, #6C63FF); }
+    .logo-panel { display: none; }
+    .logo-panel.active { display: block; }
+    .logo-preview { margin-top: 12px; background: #111; border: 1px solid #2a2a2a; border-radius: 10px; padding: 16px; text-align: center; min-height: 80px; display: flex; align-items: center; justify-content: center; }
+    .logo-preview img { max-height: 60px; max-width: 100%; object-fit: contain; }
+    .logo-preview span { color: #444; font-size: 0.85rem; }
+    .file-upload-btn { background: #222; border: 1px dashed #444; color: #aaa; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 0.9rem; text-align: center; display: block; margin-top: 8px; }
+    .file-upload-btn:hover { border-color: var(--accent, #6C63FF); color: var(--accent, #6C63FF); }
+    .font-preview { margin-top: 8px; padding: 10px 14px; background: #111; border-radius: 8px; font-size: 1.1rem; color: #fff; text-align: center; }
+
+    /* Botones generales */
+    .btn { margin-top: 10px; padding: 13px 20px; border-radius: 10px; border: none; font-size: 0.95rem; font-weight: 600; cursor: pointer; width: 100%; }
+    .btn-primary { color: #000; }
+    .btn-red { background: #c0392b; color: #fff; }
+    .btn-red:hover { background: #a93226; }
+    .btn-gray { background: #333; color: #fff; }
+    .btn-gray:hover { background: #444; }
+    .btn-outline { background: transparent; border: 1px solid #444; color: #aaa; padding: 10px 20px; border-radius: 10px; font-size: 0.9rem; font-weight: 500; cursor: pointer; width: 100%; margin-top: 10px; }
+    .btn-outline:hover { border-color: var(--accent, #6C63FF); color: var(--accent, #6C63FF); }
+    .btn-outline-danger { background: transparent; border: 1px solid #3a2a2a; color: #c0392b; padding: 10px 20px; border-radius: 10px; font-size: 0.85rem; cursor: pointer; width: 100%; margin-top: 8px; }
+    .btn-outline-danger:hover { background: #3a1a1a; }
+    .btn-remove { background: transparent; border: 1px solid #3a2a2a; color: #c0392b; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
+    .btn-remove:hover { background: #3a1a1a; }
+
+    /* Quiz builder */
+    .q-block { background: #151515; border: 1px solid #2a2a2a; border-radius: 10px; padding: 14px; margin-top: 10px; }
+    .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .q-label { font-size: 0.8rem; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+    .q-title { width: 100%; background: #222; border: 1px solid #333; color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 0.95rem; margin-bottom: 10px; }
+    .q-title:focus { outline: none; border-color: var(--accent, #6C63FF); }
+    .q-options { display: flex; flex-direction: column; gap: 8px; }
+    .q-opt-row { display: flex; align-items: center; gap: 8px; }
+    .q-opt-row input[type="radio"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent, #6C63FF); flex-shrink: 0; }
+    .q-opt-name { flex: 1; background: #222; border: 1px solid #2a2a2a; color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; }
+    .q-opt-name:focus { outline: none; border-color: var(--accent, #6C63FF); }
+    .btn-rm-sm { background: transparent; border: none; color: #333; cursor: pointer; font-size: 1rem; padding: 2px 6px; flex-shrink: 0; line-height: 1; }
+    .btn-rm-sm:hover { color: #c0392b; }
+    .btn-add-opt { background: transparent; border: 1px dashed #2a2a2a; color: #444; padding: 7px 12px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 8px; font-size: 0.85rem; }
+    .btn-add-opt:hover { border-color: var(--accent, #6C63FF); color: var(--accent, #6C63FF); }
+    #btn-add-question { background: transparent; border: 1px dashed #333; color: #555; padding: 10px; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 12px; font-size: 0.9rem; }
+    #btn-add-question:hover { border-color: var(--accent, #6C63FF); color: var(--accent, #6C63FF); }
+
+    /* Quiz settings row */
+    .quiz-settings { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+    .quiz-check-row { display: flex; align-items: center; gap: 8px; background: #1a1a1a; border: 1px solid #222; border-radius: 8px; padding: 10px 12px; cursor: pointer; font-size: 0.85rem; color: #aaa; flex: 1; min-width: 140px; }
+    .quiz-check-row input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--accent, #6C63FF); cursor: pointer; flex-shrink: 0; }
+    .timer-inline { display: none; align-items: center; gap: 8px; margin-top: 8px; }
+    .timer-inline input { width: 80px; flex-shrink: 0; }
+    .timer-inline span { color: #555; font-size: 0.85rem; }
+
+    /* Biblioteca */
+    .lib-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; margin-top: 8px; gap: 10px; }
+    .lib-info strong { font-weight: 600; font-size: 0.9rem; }
+    .lib-info span { color: #555; font-size: 0.8rem; display: block; margin-top: 2px; }
+    .lib-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-queue { background: transparent; border: 1px solid #444; color: #aaa; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+    .btn-queue:hover { border-color: var(--accent, #6C63FF); color: var(--accent, #6C63FF); }
+
+    /* Cola */
+    .queue-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; margin-top: 8px; }
+    .queue-item.current { border-color: var(--accent, #6C63FF); background: rgba(108,99,255,0.06); }
+    .queue-info { font-size: 0.9rem; }
+    .queue-info .q-num { color: #444; margin-right: 8px; font-size: 0.85rem; }
+    .queue-info .q-sub { color: #555; font-size: 0.8rem; margin-top: 2px; }
+
+    /* Control activo */
+    #active-controls { display: none; background: #0e0e1e; border: 1px solid var(--accent, #6C63FF); border-radius: 12px; padding: 16px 18px; margin-bottom: 10px; }
+    #active-label { font-size: 0.9rem; font-weight: 600; color: var(--accent, #6C63FF); margin-bottom: 12px; }
+    #countdown-text { font-size: 0.85rem; color: #555; margin-bottom: 10px; display: none; }
+
+    /* Ranking */
+    .status { margin-top: 16px; padding: 14px; border-radius: 10px; font-size: 0.9rem; display: none; border-left: 4px solid; }
+    .status.active { display: block; }
+    .divider { border: none; border-top: 1px solid #1e1e1e; margin: 10px 0; }
+    .powered { text-align: center; font-size: 0.75rem; color: #333; margin-top: 40px; padding-bottom: 10px; }
+    .powered span { color: #555; }
+  </style>
+</head>
+<body>
+  <h1>🎛️ Panel Admin</h1>
+  <p class="sub" id="page-sub">Cargando...</p>
+
+  <!-- APARIENCIA -->
+  <div class="collapsible" id="collapse-appearance">
+    <div class="collapsible-header" onclick="toggleCollapse('appearance')">
+      <span class="collapsible-title">🎨 Apariencia</span>
+      <span class="collapsible-arrow">▼</span>
+    </div>
+    <div class="collapsible-body">
+      <label>Logo</label>
+      <div class="logo-tabs">
+        <button class="logo-tab active" onclick="switchLogoTab('url', this)">URL de imagen</button>
+        <button class="logo-tab" onclick="switchLogoTab('file', this)">Subir archivo</button>
+      </div>
+      <div class="logo-panel active" id="logo-url-panel">
+        <input type="url" id="logo-url-input" placeholder="https://ejemplo.com/logo.png">
+      </div>
+      <div class="logo-panel" id="logo-file-panel">
+        <label class="file-upload-btn" for="logo-file-input">📁 Elegir imagen (JPG, PNG)</label>
+        <input type="file" id="logo-file-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleFileUpload(this)">
+      </div>
+      <div class="logo-preview" id="logo-preview"><span>Sin logo</span></div>
+
+      <label style="margin-top:16px">Color de fondo</label>
+      <div class="color-row">
+        <input type="color" id="bg-color-picker" value="#111111" oninput="syncColor('bg')">
+        <input type="text" id="bg-color-text" value="#111111" oninput="syncColorText('bg')" placeholder="#111111">
+      </div>
+      <label>Color de texto principal</label>
+      <div class="color-row">
+        <input type="color" id="text-color-picker" value="#ffffff" oninput="syncColor('text')">
+        <input type="text" id="text-color-text" value="#ffffff" oninput="syncColorText('text')" placeholder="#ffffff">
+      </div>
+      <label>Color de acento</label>
+      <div class="color-row">
+        <input type="color" id="accent-color-picker" value="#6C63FF" oninput="syncColor('accent')">
+        <input type="text" id="accent-color-text" value="#6C63FF" oninput="syncColorText('accent')" placeholder="#6C63FF">
+      </div>
+      <label>Color de subtítulos</label>
+      <div class="color-row">
+        <input type="color" id="subtitle-color-picker" value="#aaaaaa" oninput="syncColor('subtitle')">
+        <input type="text" id="subtitle-color-text" value="#aaaaaa" oninput="syncColorText('subtitle')" placeholder="#aaaaaa">
+      </div>
+      <label>Tipografía</label>
+      <select id="font-select" onchange="updateFontPreview()">
+        <option value="Inter">Inter — moderna y limpia</option>
+        <option value="Playfair Display">Playfair Display — elegante serif</option>
+        <option value="Oswald">Oswald — compacta e impactante</option>
+        <option value="Poppins">Poppins — redonda y amigable</option>
+        <option value="Space Grotesk">Space Grotesk — tecnológica</option>
+        <option value="Bebas Neue">Bebas Neue — display llamativo</option>
+      </select>
+      <div class="font-preview" id="font-preview">Así se ve este texto con la tipografía elegida</div>
+      <button class="btn-outline" onclick="applyAppearance()">✓ Aplicar apariencia</button>
+      <button class="btn-outline-danger" onclick="resetAppearance()">↺ Restaurar por defecto</button>
+    </div>
+  </div>
+
+  <!-- PANTALLA DE ESPERA -->
+  <div class="collapsible" id="collapse-waiting">
+    <div class="collapsible-header" onclick="toggleCollapse('waiting')">
+      <span class="collapsible-title">⏳ Pantalla de espera</span>
+      <span class="collapsible-arrow">▼</span>
+    </div>
+    <div class="collapsible-body">
+      <label>Título</label>
+      <input type="text" id="waiting-title" placeholder="Ej: 🎵 Bienvenidos">
+      <label>Subtítulo</label>
+      <input type="text" id="waiting-subtitle" placeholder="Ej: La votación comenzará en breve...">
+      <button class="btn-outline" onclick="updateWaiting()">↺ Actualizar pantalla de espera</button>
+    </div>
+  </div>
+
+  <!-- CUESTIONARIOS -->
+  <div class="collapsible open" id="collapse-quizzes">
+    <div class="collapsible-header" onclick="toggleCollapse('quizzes')">
+      <span class="collapsible-title">📋 Cuestionarios</span>
+      <span class="collapsible-arrow">▼</span>
+    </div>
+    <div class="collapsible-body">
+      <!-- Builder -->
+      <label style="margin-top:12px">Nombre del cuestionario</label>
+      <input type="text" id="quiz-name" placeholder="Ej: Historia Argentina — Ronda 1">
+
+      <div id="quiz-questions"></div>
+      <button id="btn-add-question" onclick="addQuestion()">+ Agregar pregunta</button>
+
+      <div class="quiz-settings">
+        <label class="quiz-check-row" style="margin-top:0">
+          <input type="checkbox" id="quiz-hide-results">
+          🙈 Ocultar resultados
+        </label>
+        <label class="quiz-check-row" style="margin-top:0" onclick="">
+          <input type="checkbox" id="quiz-timer-check" onchange="document.getElementById('timer-inline').style.display=this.checked?'flex':'none'">
+          ⏱️ Temporizador
+        </label>
+      </div>
+      <div class="timer-inline" id="timer-inline">
+        <input type="number" id="quiz-timer-seconds" value="60" min="5" max="600">
+        <span>segundos por pregunta</span>
+      </div>
+
+      <button class="btn btn-primary" style="margin-top:14px" onclick="saveQuiz()">💾 Guardar cuestionario</button>
+      <div id="edit-notice" style="display:none;font-size:0.8rem;color:#555;margin-top:8px;text-align:center">Editando cuestionario existente — <a href="#" onclick="cancelEdit()" style="color:var(--accent,#6C63FF)">cancelar</a></div>
+
+      <!-- Biblioteca -->
+      <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#444;margin-top:24px;margin-bottom:8px">Guardados</div>
+      <div id="quiz-library">
+        <p style="color:#444;font-size:0.85rem;text-align:center;padding:12px 0">Sin cuestionarios guardados</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLA -->
+  <div class="collapsible open" id="collapse-queue">
+    <div class="collapsible-header" onclick="toggleCollapse('queue')">
+      <span class="collapsible-title">🎮 Cola de reproducción</span>
+      <span class="collapsible-arrow">▼</span>
+    </div>
+    <div class="collapsible-body">
+      <div id="queue-list">
+        <p style="color:#444;font-size:0.85rem;text-align:center;padding:12px 0">Cola vacía — agregá cuestionarios desde arriba</p>
+      </div>
+      <button id="btn-start-queue" class="btn btn-primary" style="display:none;margin-top:12px" onclick="startQueue()">▶ Iniciar cola</button>
+    </div>
+  </div>
+
+  <!-- CONTROL ACTIVO (queue jugando) -->
+  <div id="active-controls">
+    <div id="active-label">▶ Cargando...</div>
+    <div id="countdown-text"></div>
+    <button id="btn-end-question" class="btn btn-red" onclick="endPoll()">⛔ Cerrar pregunta</button>
+    <button id="btn-next-question" class="btn btn-gray" style="display:none" onclick="nextQuestion()">→ Siguiente pregunta ya</button>
+    <button class="btn-outline-danger" onclick="stopQueue()" style="margin-top:8px">⏹ Detener cola y volver al inicio</button>
+  </div>
+
+  <!-- TRIVIA FINALIZADA -->
+  <div id="finished-controls" style="display:none;background:#0e0e1e;border:1px solid var(--accent,#6C63FF);border-radius:12px;padding:16px 18px;margin-bottom:10px">
+    <div style="font-size:0.9rem;font-weight:600;color:var(--accent,#6C63FF);margin-bottom:8px">🏆 ¡Trivia finalizada!</div>
+    <p style="color:#555;font-size:0.85rem;margin-bottom:12px">El ranking final está en la pantalla grande.</p>
+    <button class="btn btn-gray" onclick="resetAll()">🔄 Volver a pantalla de espera</button>
+  </div>
+
+  <!-- RESET DE EMERGENCIA (siempre visible) -->
+  <button id="btn-emergency-reset" onclick="resetAll()" style="width:100%;background:transparent;border:1px solid #222;color:#444;padding:10px;border-radius:10px;font-size:0.82rem;cursor:pointer;margin-bottom:10px;transition:all 0.2s" onmouseover="this.style.borderColor='#c0392b';this.style.color='#c0392b'" onmouseout="this.style.borderColor='#222';this.style.color='#444'">🔄 Forzar vuelta a pantalla de espera</button>
+
+  <!-- RANKING -->
+  <div class="collapsible open" id="collapse-ranking">
+    <div class="collapsible-header" onclick="toggleCollapse('ranking')">
+      <span class="collapsible-title">🏆 Ranking de trivia</span>
+      <span class="collapsible-arrow">▼</span>
+    </div>
+    <div class="collapsible-body">
+      <div id="ranking-list" style="min-height:60px">
+        <p style="color:#555;text-align:center;padding:20px 0;font-size:0.9rem">Sin participantes aún</p>
+      </div>
+      <button class="btn-outline" id="btn-display-ranking" onclick="toggleDisplayRanking()" style="margin-top:12px">📺 Mostrar ranking en display</button>
+      <button class="btn-outline-danger" onclick="resetRanking()" style="margin-top:8px">🗑️ Reiniciar ranking</button>
+    </div>
+  </div>
+
+  <div class="status" id="status"></div>
+  <div class="powered">Powered by <span>Crowdpick</span></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let PRIMARY_COLOR = '#6C63FF';
+    let VENUE_NAME = 'Crowdpick';
+    let logoBase64 = '';
+    let currentLogoTab = 'url';
+    let quizLibraryData = [];
+    let queueStateData = { playing: false, queue: [] };
+    let editingQuizId = null;
+    let quizQuestionCount = 0;
+    let displayRankingShown = false;
+    let activePhase = 'idle'; // 'active' | 'winner' | 'idle'
+    let countdownInterval = null;
+
+    const fontLink = document.createElement('link');
+    fontLink.rel = 'stylesheet';
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Oswald:wght@400;600;700&family=Poppins:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&family=Bebas+Neue&display=swap';
+    document.head.appendChild(fontLink);
+
+    fetch('/api/config').then(r => r.json()).then(cfg => {
+      PRIMARY_COLOR = cfg.primaryColor;
+      VENUE_NAME = cfg.venueName;
+      applyTheme();
+    });
+
+    function applyTheme() {
+      document.documentElement.style.setProperty('--accent', PRIMARY_COLOR);
+      document.getElementById('page-sub').textContent = VENUE_NAME + ' — Control de votaciones';
+      document.querySelectorAll('.btn-primary').forEach(el => { el.style.background = PRIMARY_COLOR; el.style.color = '#000'; });
+    }
+
+    function toggleCollapse(id) { document.getElementById('collapse-' + id).classList.toggle('open'); }
+
+    // ── Apariencia ──────────────────────────────────────────────────────────
+    socket.on('appearance-update', loadAppearanceIntoForm);
+
+    function loadAppearanceIntoForm(data) {
+      if (data.bgColor) { document.getElementById('bg-color-picker').value = data.bgColor; document.getElementById('bg-color-text').value = data.bgColor; }
+      if (data.textColor) { document.getElementById('text-color-picker').value = data.textColor; document.getElementById('text-color-text').value = data.textColor; }
+      if (data.accentColor) { document.getElementById('accent-color-picker').value = data.accentColor; document.getElementById('accent-color-text').value = data.accentColor; }
+      if (data.subtitleColor) { document.getElementById('subtitle-color-picker').value = data.subtitleColor; document.getElementById('subtitle-color-text').value = data.subtitleColor; }
+      if (data.font) { document.getElementById('font-select').value = data.font; updateFontPreview(); }
+      if (data.logoUrl) { logoBase64 = ''; document.getElementById('logo-url-input').value = data.logoUrl; showLogoPreview(data.logoUrl); }
+    }
+
+    function switchLogoTab(tab, btn) {
+      currentLogoTab = tab;
+      document.querySelectorAll('.logo-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('logo-url-panel').classList.toggle('active', tab === 'url');
+      document.getElementById('logo-file-panel').classList.toggle('active', tab === 'file');
+    }
+    function handleFileUpload(input) {
+      const file = input.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => { logoBase64 = e.target.result; showLogoPreview(logoBase64); };
+      reader.readAsDataURL(file);
+    }
+    document.getElementById('logo-url-input').addEventListener('input', (e) => { logoBase64 = ''; showLogoPreview(e.target.value); });
+    function showLogoPreview(src) {
+      const p = document.getElementById('logo-preview');
+      p.innerHTML = src ? `<img src="${src}" alt="Logo" onerror="this.parentElement.innerHTML='<span>No se pudo cargar</span>'">` : '<span>Sin logo</span>';
+    }
+    function syncColor(type) { document.getElementById(`${type}-color-text`).value = document.getElementById(`${type}-color-picker`).value; }
+    function syncColorText(type) {
+      const val = document.getElementById(`${type}-color-text`).value;
+      if (/^#[0-9A-Fa-f]{6}$/.test(val)) document.getElementById(`${type}-color-picker`).value = val;
+    }
+    function updateFontPreview() { document.getElementById('font-preview').style.fontFamily = `'${document.getElementById('font-select').value}', sans-serif`; }
+    function applyAppearance() {
+      socket.emit('update-appearance', {
+        bgColor: document.getElementById('bg-color-text').value || '#111111',
+        textColor: document.getElementById('text-color-text').value || '#ffffff',
+        accentColor: document.getElementById('accent-color-text').value || PRIMARY_COLOR,
+        subtitleColor: document.getElementById('subtitle-color-text').value || '#aaaaaa',
+        font: document.getElementById('font-select').value,
+        logoUrl: logoBase64 || document.getElementById('logo-url-input').value.trim()
+      });
+      showStatus('✅ Apariencia aplicada.', true);
+    }
+    function resetAppearance() {
+      socket.emit('reset-appearance'); logoBase64 = '';
+      document.getElementById('logo-url-input').value = ''; showLogoPreview('');
+      showStatus('↺ Apariencia restaurada.', false);
+    }
+    function updateWaiting() {
+      socket.emit('update-waiting', { title: document.getElementById('waiting-title').value, subtitle: document.getElementById('waiting-subtitle').value });
+      showStatus('✅ Pantalla de espera actualizada.', true);
+    }
+
+    // ── Quiz builder ────────────────────────────────────────────────────────
+    function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    function addQuestion(title = '', options = [], correctId = null) {
+      const qIdx = quizQuestionCount++;
+      const defaultOpts = options.length ? options : [
+        { id: 'opt0', name: '' }, { id: 'opt1', name: '' }, { id: 'opt2', name: '' }
+      ];
+      const block = document.createElement('div');
+      block.className = 'q-block';
+      block.dataset.qidx = qIdx;
+      block.innerHTML = `
+        <div class="q-header">
+          <span class="q-label">Pregunta 1</span>
+          <button class="btn-remove" onclick="removeQuestion(this)">✕ Quitar</button>
+        </div>
+        <input type="text" class="q-title" placeholder="¿Texto de la pregunta?" value="${escHtml(title)}">
+        <div class="q-options">
+          ${defaultOpts.map((opt, i) => `
+            <div class="q-opt-row">
+              <input type="radio" name="correct-q${qIdx}" class="q-correct" value="${escHtml(opt.id)}" ${correctId === opt.id ? 'checked' : ''}>
+              <input type="text" class="q-opt-name" placeholder="Opción ${String.fromCharCode(65+i)}" value="${escHtml(opt.name)}">
+              <button class="btn-rm-sm" onclick="removeQuizOption(this)" title="Eliminar opción">×</button>
+            </div>`).join('')}
+        </div>
+        <button class="btn-add-opt" onclick="addQuizOption(this)">+ Agregar opción</button>
+      `;
+      document.getElementById('quiz-questions').appendChild(block);
+      renumberQuestions();
+    }
+
+    function removeQuestion(btn) {
+      btn.closest('.q-block').remove();
+      renumberQuestions();
+    }
+
+    function renumberQuestions() {
+      document.querySelectorAll('.q-block').forEach((block, i) => {
+        const label = block.querySelector('.q-label');
+        if (label) label.textContent = `Pregunta ${i + 1}`;
+      });
+    }
+
+    function addQuizOption(btn) {
+      const qBlock = btn.closest('.q-block');
+      const qIdx = qBlock.dataset.qidx;
+      const optList = qBlock.querySelector('.q-options');
+      const optCount = optList.querySelectorAll('.q-opt-row').length;
+      const row = document.createElement('div');
+      row.className = 'q-opt-row';
+      row.innerHTML = `
+        <input type="radio" name="correct-q${qIdx}" class="q-correct" value="opt${optCount}">
+        <input type="text" class="q-opt-name" placeholder="Opción ${String.fromCharCode(65 + optCount)}">
+        <button class="btn-rm-sm" onclick="removeQuizOption(this)" title="Eliminar opción">×</button>
+      `;
+      optList.appendChild(row);
+    }
+
+    function removeQuizOption(btn) {
+      const row = btn.closest('.q-opt-row');
+      const qBlock = row.closest('.q-block');
+      if (qBlock.querySelectorAll('.q-opt-row').length <= 2) return;
+      row.remove();
+      reassignOptionIds(qBlock);
+    }
+
+    function reassignOptionIds(qBlock) {
+      const qIdx = qBlock.dataset.qidx;
+      qBlock.querySelectorAll('.q-opt-row').forEach((row, i) => {
+        row.querySelector('.q-correct').value = `opt${i}`;
+        row.querySelector('.q-correct').name = `correct-q${qIdx}`;
+      });
+    }
+
+    function saveQuiz() {
+      const name = document.getElementById('quiz-name').value.trim();
+      if (!name) { showStatus('⚠️ Ingresá un nombre para el cuestionario.', false); return; }
+      const qBlocks = document.querySelectorAll('.q-block');
+      if (!qBlocks.length) { showStatus('⚠️ Agregá al menos una pregunta.', false); return; }
+      const questions = [];
+      let allValid = true;
+      qBlocks.forEach(block => {
+        const title = block.querySelector('.q-title').value.trim();
+        if (!title) { allValid = false; return; }
+        const options = [];
+        let correctId = null;
+        block.querySelectorAll('.q-opt-row').forEach((row, oi) => {
+          const optName = row.querySelector('.q-opt-name').value.trim();
+          if (!optName) return;
+          const id = `opt${oi}`;
+          options.push({ id, name: optName });
+          if (row.querySelector('.q-correct').checked) correctId = id;
+        });
+        if (options.length < 2 || !correctId) { allValid = false; return; }
+        questions.push({ title, options, correctId });
+      });
+      if (!allValid || questions.length !== qBlocks.length) {
+        showStatus('⚠️ Cada pregunta necesita texto, mínimo 2 opciones y marcar la respuesta correcta.', false);
+        return;
+      }
+      const timerEnabled = document.getElementById('quiz-timer-check').checked;
+      socket.emit('save-quiz', {
+        id: editingQuizId || '',
+        name,
+        hideResults: document.getElementById('quiz-hide-results').checked,
+        timerSeconds: timerEnabled ? (parseInt(document.getElementById('quiz-timer-seconds').value) || 60) : 0,
+        questions
+      });
+      cancelEdit();
+      showStatus(`✅ "${name}" guardado (${questions.length} pregunta${questions.length !== 1 ? 's' : ''}).`, true);
+    }
+
+    function editQuiz(quizId) {
+      const quiz = quizLibraryData.find(q => q.id === quizId);
+      if (!quiz) return;
+      editingQuizId = quizId;
+      document.getElementById('quiz-name').value = quiz.name;
+      document.getElementById('quiz-questions').innerHTML = '';
+      quizQuestionCount = 0;
+      quiz.questions.forEach(q => addQuestion(q.title, q.options, q.correctId));
+      document.getElementById('quiz-hide-results').checked = quiz.hideResults || false;
+      const hasTimer = quiz.timerSeconds > 0;
+      document.getElementById('quiz-timer-check').checked = hasTimer;
+      document.getElementById('timer-inline').style.display = hasTimer ? 'flex' : 'none';
+      if (hasTimer) document.getElementById('quiz-timer-seconds').value = quiz.timerSeconds;
+      document.getElementById('edit-notice').style.display = 'block';
+      document.getElementById('collapse-quizzes').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelEdit() {
+      editingQuizId = null;
+      document.getElementById('quiz-name').value = '';
+      document.getElementById('quiz-questions').innerHTML = '';
+      quizQuestionCount = 0;
+      document.getElementById('quiz-hide-results').checked = false;
+      document.getElementById('quiz-timer-check').checked = false;
+      document.getElementById('timer-inline').style.display = 'none';
+      document.getElementById('edit-notice').style.display = 'none';
+      addQuestion();
+    }
+
+    socket.on('quiz-library-update', (library) => {
+      quizLibraryData = library;
+      renderLibrary(library);
+    });
+
+    function renderLibrary(library) {
+      const el = document.getElementById('quiz-library');
+      if (!library.length) {
+        el.innerHTML = '<p style="color:#444;font-size:0.85rem;text-align:center;padding:12px 0">Sin cuestionarios guardados</p>';
+        return;
+      }
+      el.innerHTML = library.map(quiz => `
+        <div class="lib-item">
+          <div class="lib-info">
+            <strong>${escHtml(quiz.name)}</strong>
+            <span>${quiz.questions.length} pregunta${quiz.questions.length !== 1 ? 's' : ''}${quiz.timerSeconds ? ' · ⏱ ' + quiz.timerSeconds + 's' : ''}${quiz.hideResults ? ' · 🙈' : ''}</span>
+          </div>
+          <div class="lib-actions">
+            <button class="btn-queue" onclick="addToQueue('${quiz.id}')">+ Cola</button>
+            <button class="btn-queue" onclick="editQuiz('${quiz.id}')">✏️</button>
+            <button class="btn-remove" onclick="deleteQuiz('${quiz.id}')">✕</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function deleteQuiz(quizId) {
+      const quiz = quizLibraryData.find(q => q.id === quizId);
+      if (!quiz) return;
+      if (!confirm(`¿Eliminar "${quiz.name}"?`)) return;
+      socket.emit('delete-quiz', quizId);
+    }
+
+    // ── Cola ────────────────────────────────────────────────────────────────
+    function addToQueue(quizId) {
+      socket.emit('add-to-queue', quizId);
+      showStatus('✅ Agregado a la cola.', true);
+    }
+
+    socket.on('queue-state', (state) => {
+      queueStateData = state;
+      renderQueueList(state);
+      renderActiveControls(state);
+    });
+
+    function renderQueueList(state) {
+      const el = document.getElementById('queue-list');
+      if (!state.queue || !state.queue.length) {
+        el.innerHTML = '<p style="color:#444;font-size:0.85rem;text-align:center;padding:12px 0">Cola vacía — agregá cuestionarios desde arriba</p>';
+        document.getElementById('btn-start-queue').style.display = 'none';
+        return;
+      }
+      el.innerHTML = state.queue.map((item, i) => `
+        <div class="queue-item ${state.playing && state.quizIdx === i ? 'current' : ''}">
+          <div class="queue-info">
+            <span class="q-num">${i + 1}.</span>
+            <strong>${escHtml(item.name)}</strong>
+            <div class="q-sub">${item.count} pregunta${item.count !== 1 ? 's' : ''}</div>
+          </div>
+          ${!state.playing ? `<button class="btn-remove" onclick="removeFromQueue('${item.queueEntryId}')">✕</button>` : ''}
+        </div>
+      `).join('');
+      document.getElementById('btn-start-queue').style.display = state.playing ? 'none' : 'block';
+    }
+
+    function renderActiveControls(state) {
+      const section = document.getElementById('active-controls');
+      if (!state.playing) { section.style.display = 'none'; return; }
+      section.style.display = 'block';
+      document.getElementById('active-label').textContent =
+        `▶ ${state.quizName} — Pregunta ${state.questionIdx + 1}/${state.totalQuestions}`;
+    }
+
+    function removeFromQueue(queueEntryId) { socket.emit('remove-from-queue', queueEntryId); }
+    function startQueue() { socket.emit('start-queue'); }
+    function stopQueue() { if (confirm('¿Detener la cola y volver a la pantalla de espera?')) socket.emit('stop-queue'); }
+    function nextQuestion() { socket.emit('next-question'); }
+    function endPoll() { socket.emit('end-poll'); }
+    function resetAll() { socket.emit('reset-display'); }
+
+    // Fases durante cola
+    socket.on('poll-update', () => {
+      activePhase = 'active';
+      if (queueStateData.playing) {
+        document.getElementById('btn-end-question').style.display = 'block';
+        document.getElementById('btn-next-question').style.display = 'none';
+        document.getElementById('countdown-text').style.display = 'none';
+      }
+    });
+
+    socket.on('show-winner', () => {
+      activePhase = 'winner';
+      if (queueStateData.playing) {
+        document.getElementById('btn-end-question').style.display = 'none';
+        document.getElementById('btn-next-question').style.display = 'block';
+      }
+    });
+
+    socket.on('queue-finished', () => {
+      document.getElementById('active-controls').style.display = 'none';
+      document.getElementById('finished-controls').style.display = 'block';
+      showStatus('🏆 Cola finalizada — ranking final en pantalla grande.', true);
+    });
+
+    socket.on('go-home', () => {
+      activePhase = 'idle';
+      document.getElementById('active-controls').style.display = 'none';
+      document.getElementById('finished-controls').style.display = 'none';
+    });
+
+    // Countdown automático entre preguntas
+    socket.on('queue-advance-countdown', ({ seconds }) => {
+      if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+      const el = document.getElementById('countdown-text');
+      if (seconds <= 0) { el.style.display = 'none'; return; }
+      let rem = seconds;
+      el.style.display = 'block';
+      el.textContent = `⏳ Siguiente automáticamente en ${rem}s...`;
+      countdownInterval = setInterval(() => {
+        rem--;
+        if (rem <= 0) { clearInterval(countdownInterval); el.style.display = 'none'; }
+        else el.textContent = `⏳ Siguiente automáticamente en ${rem}s...`;
+      }, 1000);
+    });
+
+    // ── Ranking ─────────────────────────────────────────────────────────────
+    socket.on('ranking-update', (ranking) => {
+      const list = document.getElementById('ranking-list');
+      if (!ranking.length) {
+        list.innerHTML = '<p style="color:#555;text-align:center;padding:20px 0;font-size:0.9rem">Sin participantes aún</p>';
+        return;
+      }
+      list.innerHTML = ranking.map((p, i) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 2px;border-bottom:1px solid #1a1a1a">
+          <div>
+            <span style="color:#444;margin-right:8px;font-size:0.85rem">${i + 1}.</span>
+            <span style="font-weight:600">${escHtml(p.name)}</span>
+            <span style="color:#333;font-size:0.75rem;margin-left:6px">···${p.docLast3}</span>
+          </div>
+          <div style="font-weight:700;color:var(--accent,#6C63FF);font-size:1.1rem">${p.score} pts</div>
+        </div>
+      `).join('');
+    });
+
+    function toggleDisplayRanking() {
+      displayRankingShown = !displayRankingShown;
+      socket.emit('toggle-display-ranking');
+      const btn = document.getElementById('btn-display-ranking');
+      btn.textContent = displayRankingShown ? '📺 Ocultar ranking del display' : '📺 Mostrar ranking en display';
+      btn.style.borderColor = displayRankingShown ? PRIMARY_COLOR : '';
+      btn.style.color = displayRankingShown ? PRIMARY_COLOR : '';
+    }
+
+    function resetRanking() {
+      if (!confirm('¿Reiniciar el ranking? Se pierden todos los puntos.')) return;
+      socket.emit('reset-ranking');
+      showStatus('🗑️ Ranking reiniciado.', false);
+    }
+
+    // ── Utilidades ──────────────────────────────────────────────────────────
+    function showStatus(msg, ok) {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.className = 'status active';
+      el.style.background = ok ? '#0e1a0e' : '#1a0e0e';
+      el.style.borderLeftColor = ok ? PRIMARY_COLOR : '#c0392b';
+    }
+
+    updateFontPreview();
+    // Inicializar builder con una pregunta vacía
+    addQuestion();
+  </script>
+</body>
+</html>

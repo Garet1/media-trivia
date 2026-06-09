@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crowdpick — Votá</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #111; color: #fff;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 20px; transition: background 0.4s, color 0.4s;
+    }
+    .logo-container { margin-bottom: 20px; display: none; }
+    .logo-container img { max-height: 70px; max-width: 200px; object-fit: contain; }
+    h1 { font-size: 1.4rem; margin-bottom: 8px; text-align: center; }
+    p.subtitle { font-size: 0.9rem; margin-bottom: 30px; text-align: center; transition: color 0.4s; }
+    .options { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; }
+    .option-btn {
+      background: #222; border: 2px solid #333; color: #fff;
+      padding: 18px 20px; border-radius: 12px; font-size: 1rem;
+      cursor: pointer; text-align: left; transition: all 0.2s;
+    }
+    .option-title { font-weight: 600; }
+    #thanks { display: none; text-align: center; }
+    #thanks h2 { font-size: 1.6rem; margin-bottom: 10px; }
+    #thanks p { margin-top: 8px; transition: color 0.4s; }
+    #winner-announcement {
+      display: none; margin-top: 30px; border-radius: 16px;
+      padding: 24px 20px; text-align: center;
+      width: 100%; max-width: 400px; border: 2px solid;
+    }
+    #winner-announcement .label { font-size: 0.95rem; margin-bottom: 8px; transition: color 0.4s; }
+    #winner-announcement .name { font-size: 1.8rem; font-weight: 700; }
+    #winner-announcement .trophy { font-size: 2.5rem; margin-bottom: 10px; }
+    #waiting { text-align: center; }
+    #waiting h2 { font-size: 1.4rem; }
+    #waiting p { margin-top: 10px; font-size: 0.85rem; transition: color 0.4s; }
+
+    /* Login */
+    #login-screen { width: 100%; max-width: 340px; text-align: center; }
+    #login-screen h2 { font-size: 1.5rem; margin-bottom: 6px; }
+    #login-screen .login-sub { font-size: 0.85rem; color: #555; margin-bottom: 28px; }
+    .login-input {
+      width: 100%; background: #222; border: 1px solid #333; color: #fff;
+      padding: 14px 16px; border-radius: 10px; font-size: 1rem;
+      margin-top: 12px; text-align: center;
+    }
+    .login-input:focus { outline: none; border-color: var(--accent, #6C63FF); }
+    .login-btn {
+      width: 100%; background: var(--accent, #6C63FF); color: #000;
+      border: none; padding: 14px; border-radius: 10px;
+      font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 16px;
+    }
+    .login-btn:active { opacity: 0.85; }
+    .login-error { color: #c0392b; font-size: 0.85rem; margin-top: 10px; display: none; }
+
+    /* Ranking post-resultado */
+    #vote-ranking { display: none; width: 100%; max-width: 400px; margin-top: 20px; }
+    .vote-ranking-title {
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px;
+      color: #444; text-align: center; margin-bottom: 12px;
+    }
+    .vote-rank-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 14px; border-radius: 10px; margin-bottom: 8px;
+      background: #181818; border: 1px solid #222;
+    }
+    .vote-rank-row.me {
+      background: rgba(108,99,255,0.1);
+      border-color: var(--accent, #6C63FF);
+    }
+    .vote-rank-medal { width: 28px; flex-shrink: 0; font-size: 1rem; }
+    .vote-rank-name { flex: 1; font-size: 0.9rem; font-weight: 500; }
+    .vote-rank-me-tag { font-size: 0.7rem; color: var(--accent, #6C63FF); margin-left: 6px; }
+    .vote-rank-pts { font-weight: 700; color: var(--accent, #6C63FF); font-size: 0.95rem; }
+
+    /* Countdown siguiente pregunta */
+    #next-question-countdown {
+      display: none; margin-top: 16px;
+      font-size: 0.8rem; color: #444; text-align: center;
+    }
+
+    .player-tag { position: fixed; top: 14px; right: 16px; font-size: 0.72rem; color: #444; }
+    .powered { position: fixed; bottom: 14px; right: 20px; font-size: 0.7rem; color: #2a2a2a; }
+    #vote-timer { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); display: none; text-align: center; }
+    #vote-timer .secs { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+    #vote-timer .label { font-size: 0.7rem; color: #555; }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div id="login-screen">
+    <h2>🎯 Trivia</h2>
+    <p class="login-sub">Ingresá tus datos para participar</p>
+    <input class="login-input" type="text" id="login-name" placeholder="Tu nombre" autocomplete="off">
+    <input class="login-input" type="tel" id="login-doc" placeholder="Últimos 3 números de tu DNI"
+      maxlength="3" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
+      oninput="this.value=this.value.replace(/\D/g,'').slice(0,3)">
+    <button class="login-btn" onclick="doLogin()">Ingresar →</button>
+    <div class="login-error" id="login-error">Completá ambos campos (DNI: solo 3 dígitos)</div>
+  </div>
+
+  <!-- ESPERA -->
+  <div id="waiting" style="display:none">
+    <div class="logo-container" id="waiting-logo"><img id="waiting-logo-img" src="" alt="Logo"></div>
+    <h2 id="waiting-title">🎵 Crowdpick</h2>
+    <p id="waiting-subtitle">Esperando la próxima pregunta...</p>
+  </div>
+
+  <!-- PREGUNTA -->
+  <div id="poll-section" style="display:none; width:100%; max-width:400px; flex-direction:column; align-items:center;">
+    <div class="logo-container" id="poll-logo"><img id="poll-logo-img" src="" alt="Logo"></div>
+    <h1 id="poll-title"></h1>
+    <p class="subtitle" id="poll-subtitle">Elegí una opción</p>
+    <div class="options" id="options-container"></div>
+  </div>
+
+  <!-- RESPUESTA ENVIADA -->
+  <div id="thanks">
+    <div class="logo-container" id="thanks-logo"><img id="thanks-logo-img" src="" alt="Logo"></div>
+    <h2 id="thanks-title">⏳ ¡Respuesta enviada!</h2>
+    <p id="thanks-sub">Esperá el resultado en la pantalla grande</p>
+  </div>
+
+  <!-- PANTALLA FINAL TRIVIA -->
+  <div id="final-screen" style="display:none; text-align:center; width:100%; max-width:400px">
+    <div style="font-size:2.4rem;margin-bottom:10px">🏆</div>
+    <h2 style="margin-bottom:6px">¡Trivia finalizada!</h2>
+    <p id="final-sub" style="font-size:0.85rem;margin-bottom:24px">Ranking final</p>
+    <div id="final-ranking-list"></div>
+  </div>
+
+  <!-- RESULTADO + RANKING -->
+  <div id="winner-announcement">
+    <div class="trophy" id="result-emoji">🏆</div>
+    <div class="label" id="winner-label">La respuesta correcta era...</div>
+    <div class="name" id="winner-name"></div>
+  </div>
+  <div id="vote-ranking">
+    <div class="vote-ranking-title">Ranking</div>
+    <div id="vote-ranking-list"></div>
+  </div>
+  <div id="next-question-countdown"></div>
+
+  <div id="vote-timer">
+    <div class="secs" id="vote-timer-secs">60</div>
+    <div class="label">seg</div>
+  </div>
+  <div class="player-tag" id="player-tag"></div>
+  <div class="powered">Powered by Crowdpick</div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let pollId = null;
+    let voted = false;
+    let myVotedOption = null;
+    let currentPoll = null;
+    let pendingPoll = null;
+    let lastRanking = [];
+    let countdownInterval = null;
+    let appearance = {
+      bgColor: '#111111', textColor: '#ffffff',
+      accentColor: '#6C63FF', subtitleColor: '#aaaaaa',
+      font: 'Inter', logoUrl: ''
+    };
+
+    const fontLink = document.createElement('link');
+    fontLink.rel = 'stylesheet';
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Oswald:wght@400;600;700&family=Poppins:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&family=Bebas+Neue&display=swap';
+    document.head.appendChild(fontLink);
+
+    let player = JSON.parse(localStorage.getItem('crowdpick_player') || 'null');
+
+    if (player) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('waiting').style.display = 'block';
+      document.getElementById('player-tag').textContent = player.name;
+    }
+
+    function doLogin() {
+      const name = document.getElementById('login-name').value.trim();
+      const doc3 = document.getElementById('login-doc').value.trim();
+      if (!name || !/^\d{1,3}$/.test(doc3)) {
+        document.getElementById('login-error').style.display = 'block'; return;
+      }
+      player = { name, docLast3: doc3 };
+      localStorage.setItem('crowdpick_player', JSON.stringify(player));
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('player-tag').textContent = player.name;
+      if (pendingPoll) { handlePollUpdate(pendingPoll); pendingPoll = null; }
+      else { document.getElementById('waiting').style.display = 'block'; }
+    }
+
+    fetch('/api/config').then(r => r.json()).then(cfg => {
+      appearance.accentColor = cfg.primaryColor;
+      document.documentElement.style.setProperty('--accent', cfg.primaryColor);
+      applyAppearance();
+    });
+
+    socket.on('appearance-update', (data) => {
+      appearance = { ...appearance, ...data };
+      document.documentElement.style.setProperty('--accent', appearance.accentColor);
+      applyAppearance();
+    });
+
+    function applyAppearance() {
+      document.body.style.background = appearance.bgColor;
+      document.body.style.color = appearance.textColor;
+      document.body.style.fontFamily = `'${appearance.font}', sans-serif`;
+      document.getElementById('waiting-title').style.color = appearance.accentColor;
+      document.getElementById('waiting-subtitle').style.color = appearance.subtitleColor;
+      document.getElementById('thanks-title').style.color = appearance.accentColor;
+      document.getElementById('thanks-sub').style.color = appearance.subtitleColor;
+      document.getElementById('winner-label').style.color = appearance.subtitleColor;
+      document.getElementById('winner-name').style.color = appearance.accentColor;
+      document.getElementById('winner-announcement').style.borderColor = appearance.accentColor;
+      document.getElementById('winner-announcement').style.background = appearance.accentColor + '22';
+      const logos = ['waiting-logo','poll-logo','thanks-logo'];
+      const imgs = ['waiting-logo-img','poll-logo-img','thanks-logo-img'];
+      logos.forEach((id, i) => {
+        const container = document.getElementById(id);
+        const img = document.getElementById(imgs[i]);
+        if (appearance.logoUrl) { img.src = appearance.logoUrl; container.style.display = 'block'; }
+        else { container.style.display = 'none'; }
+      });
+      document.querySelectorAll('.option-btn').forEach(btn => {
+        btn.style.color = appearance.textColor;
+        btn.style.background = appearance.bgColor === '#ffffff' ? '#f5f5f5' : '#222';
+      });
+    }
+
+    socket.on('update-waiting', ({ title, subtitle }) => {
+      if (title !== undefined) document.getElementById('waiting-title').textContent = title || '🎵 Crowdpick';
+      if (subtitle !== undefined) document.getElementById('waiting-subtitle').textContent = subtitle || 'Esperando la próxima pregunta...';
+    });
+
+    function hideAll() {
+      ['login-screen','waiting','poll-section','thanks','winner-announcement','vote-ranking','next-question-countdown','final-screen']
+        .forEach(id => document.getElementById(id).style.display = 'none');
+    }
+
+    function showWaiting() {
+      hideAll();
+      if (!player) document.getElementById('login-screen').style.display = 'block';
+      else document.getElementById('waiting').style.display = 'block';
+    }
+
+    socket.on('poll-update', ({ poll }) => {
+      if (!player) { pendingPoll = { poll }; return; }
+      handlePollUpdate({ poll });
+    });
+
+    function handlePollUpdate({ poll }) {
+      currentPoll = poll;
+      const newPollId = poll.id || poll.title;
+      if (pollId && pollId !== newPollId) localStorage.removeItem('voted_' + pollId);
+      pollId = newPollId;
+      myVotedOption = localStorage.getItem('voted_' + pollId);
+      if (myVotedOption) {
+        voted = true; hideAll();
+        document.getElementById('thanks').style.display = 'block'; return;
+      }
+      voted = false; myVotedOption = null;
+      hideAll();
+      document.getElementById('poll-section').style.display = 'flex';
+      document.getElementById('poll-title').textContent = poll.title;
+      document.getElementById('poll-title').style.color = appearance.accentColor;
+      document.getElementById('poll-subtitle').style.color = appearance.subtitleColor;
+      const container = document.getElementById('options-container');
+      container.innerHTML = '';
+      poll.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.style.color = appearance.textColor;
+        btn.innerHTML = `<div class="option-title">${opt.name}</div>`;
+        btn.onmouseover = () => { btn.style.borderColor = appearance.accentColor; };
+        btn.onmouseout = () => { btn.style.borderColor = '#333'; };
+        btn.onclick = () => castVote(opt.id);
+        container.appendChild(btn);
+      });
+    }
+
+    socket.on('ranking-update', (ranking) => {
+      lastRanking = ranking;
+    });
+
+    socket.on('show-winner', ({ winnerId, poll }) => {
+      if (!poll) return;
+      const winner = poll.options.find(o => o.id === winnerId);
+      const myVote = localStorage.getItem('voted_' + (poll.id || poll.title));
+      let emoji = '🏆', label = 'La respuesta correcta era...';
+      if (myVote) {
+        if (myVote === winnerId) { emoji = '✅'; label = '¡Acertaste!'; }
+        else { emoji = '❌'; label = 'No fue... La correcta era:'; }
+      }
+      document.getElementById('result-emoji').textContent = emoji;
+      document.getElementById('winner-label').textContent = label;
+      document.getElementById('winner-name').textContent = winner ? winner.name : '';
+      hideAll();
+      document.getElementById('winner-announcement').style.display = 'block';
+
+      // Mostrar ranking debajo después de 1.2 segundos
+      setTimeout(() => {
+        renderVoteRanking();
+        if (lastRanking.length) document.getElementById('vote-ranking').style.display = 'block';
+      }, 1200);
+    });
+
+    function renderVoteRanking() {
+      const list = document.getElementById('vote-ranking-list');
+      if (!lastRanking.length) { list.innerHTML = ''; return; }
+      const medals = ['🥇','🥈','🥉'];
+      list.innerHTML = lastRanking.slice(0, 8).map((p, i) => {
+        const isMe = player && p.name === player.name && p.docLast3 === player.docLast3;
+        return `
+          <div class="vote-rank-row${isMe ? ' me' : ''}">
+            <div class="vote-rank-medal">${medals[i] || (i + 1) + '.'}</div>
+            <div class="vote-rank-name">${escHtml(p.name)}${isMe ? '<span class="vote-rank-me-tag">← Vos</span>' : ''}</div>
+            <div class="vote-rank-pts">${p.score} pts</div>
+          </div>`;
+      }).join('');
+    }
+
+    function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    socket.on('queue-finished', () => {
+      hideAll();
+      // Actualizar subtítulo con posición propia si existe
+      if (player && lastRanking.length) {
+        const myPos = lastRanking.findIndex(p => p.name === player.name && p.docLast3 === player.docLast3);
+        if (myPos >= 0) {
+          const medals = ['🥇','🥈','🥉'];
+          document.getElementById('final-sub').textContent = `Tu posición: ${medals[myPos] || (myPos+1)+'°'} — ${lastRanking[myPos].score} puntos`;
+        }
+      }
+      const list = document.getElementById('final-ranking-list');
+      const medals = ['🥇','🥈','🥉'];
+      list.innerHTML = lastRanking.slice(0, 10).map((p, i) => {
+        const isMe = player && p.name === player.name && p.docLast3 === player.docLast3;
+        return `
+          <div class="vote-rank-row${isMe ? ' me' : ''}">
+            <div class="vote-rank-medal">${medals[i] || (i+1) + '.'}</div>
+            <div class="vote-rank-name">${escHtml(p.name)}${isMe ? '<span class="vote-rank-me-tag">← Vos</span>' : ''}</div>
+            <div class="vote-rank-pts">${p.score} pts</div>
+          </div>`;
+      }).join('');
+      document.getElementById('final-screen').style.display = 'block';
+    });
+
+    socket.on('go-home', () => {
+      voted = false; myVotedOption = null;
+      if (pollId) localStorage.removeItem('voted_' + pollId);
+      pollId = null; currentPoll = null;
+      showWaiting();
+    });
+
+    socket.on('timer-update', ({ remaining }) => {
+      const box = document.getElementById('vote-timer');
+      const secs = document.getElementById('vote-timer-secs');
+      box.style.display = remaining > 0 ? 'block' : 'none';
+      secs.textContent = remaining;
+      secs.style.color = remaining <= 10 ? '#c0392b' : remaining <= 20 ? '#e67e22' : appearance.accentColor;
+    });
+
+    socket.on('timer-clear', () => { document.getElementById('vote-timer').style.display = 'none'; });
+
+    socket.on('queue-advance-countdown', ({ seconds }) => {
+      if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+      const el = document.getElementById('next-question-countdown');
+      if (seconds <= 0) { el.style.display = 'none'; return; }
+      let rem = seconds;
+      el.style.display = 'block';
+      el.textContent = `Siguiente pregunta en ${rem}s...`;
+      countdownInterval = setInterval(() => {
+        rem--;
+        if (rem <= 0) { clearInterval(countdownInterval); el.style.display = 'none'; }
+        else el.textContent = `Siguiente pregunta en ${rem}s...`;
+      }, 1000);
+    });
+
+    function castVote(optionId) {
+      if (voted || !player) return;
+      voted = true; myVotedOption = optionId;
+      localStorage.setItem('voted_' + pollId, optionId);
+      socket.emit('vote', { optionId, name: player.name, docLast3: player.docLast3 });
+      hideAll();
+      document.getElementById('thanks').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

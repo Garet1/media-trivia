@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Crowdpick — Display</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #111;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      transition: background 0.4s, color 0.4s;
+    }
+    #waiting { text-align: center; }
+    #waiting .logo { margin-bottom: 24px; }
+    #waiting .logo img { max-height: 100px; max-width: 300px; object-fit: contain; }
+    #waiting h1 { font-size: 3rem; }
+    #waiting p { font-size: 1.2rem; color: #555; margin-top: 16px; transition: color 0.4s; }
+    #poll-section { display: none; width: 100%; max-width: 1000px; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+    .header-left { display: flex; align-items: center; gap: 20px; }
+    .header-logo img { max-height: 60px; max-width: 160px; object-fit: contain; }
+    .poll-title { font-size: 2.2rem; font-weight: 700; transition: color 0.4s; }
+    .qr-box { text-align: center; }
+    .qr-box img { border-radius: 12px; width: 140px; height: 140px; }
+    .qr-label { font-size: 0.85rem; color: #aaa; margin-top: 8px; }
+    .qr-url { font-size: 1rem; font-weight: 600; }
+    .options { display: flex; flex-direction: column; gap: 20px; }
+    .option-row { display: flex; align-items: center; gap: 16px; transition: opacity 0.5s; }
+    .option-row.loser { opacity: 0.3; }
+    .option-info { width: 260px; flex-shrink: 0; }
+    .option-name { font-size: 1.3rem; font-weight: 700; transition: color 0.5s; }
+    .option-desc { font-size: 0.85rem; margin-top: 4px; transition: color 0.4s; }
+    .bar-container { flex: 1; background: #222; border-radius: 8px; height: 48px; overflow: hidden; transition: background 0.4s; }
+    .bar-fill { height: 100%; border-radius: 8px; transition: width 0.5s ease; min-width: 4px; }
+    .vote-count { width: 80px; text-align: right; font-size: 1.4rem; font-weight: 700; transition: color 0.4s; }
+    .percent { width: 60px; text-align: right; font-size: 1rem; color: #aaa; }
+    .winner-badge { font-size: 1.5rem; width: 40px; text-align: center; opacity: 0; transition: opacity 0.5s; }
+    .option-row.winner .winner-badge { opacity: 1; }
+    .powered { position: fixed; bottom: 14px; right: 20px; font-size: 0.7rem; color: #2a2a2a; }
+
+    /* Modo resultados ocultos */
+    @keyframes pulse-vote {
+      0%, 100% { border-color: #2a2a2a; box-shadow: 0 0 0px rgba(0,0,0,0); }
+      50%  { border-color: var(--accent, #6C63FF); box-shadow: 0 0 24px rgba(108,99,255,0.25); }
+    }
+    @keyframes dot-wave {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+      40%            { transform: scale(1);   opacity: 1; }
+    }
+    .options.hidden-mode {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .options.hidden-mode .option-row {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: #1a1a1a;
+      border: 2px solid #2a2a2a;
+      border-radius: 20px;
+      padding: 36px 24px;
+      min-height: 140px;
+      gap: 0;
+      animation: pulse-vote 2.4s ease-in-out infinite;
+    }
+    .options.hidden-mode .option-row:nth-child(2) { animation-delay: 0.4s; }
+    .options.hidden-mode .option-row:nth-child(3) { animation-delay: 0.8s; }
+    .options.hidden-mode .option-row:nth-child(4) { animation-delay: 1.2s; }
+    .options.hidden-mode .option-info { width: 100%; }
+    .options.hidden-mode .option-name { font-size: 1.6rem; }
+    .options.hidden-mode .bar-container,
+    .options.hidden-mode .vote-count,
+    .options.hidden-mode .percent,
+    .options.hidden-mode .winner-badge { display: none !important; }
+    .voting-dots { display: none; gap: 6px; margin-top: 16px; justify-content: center; }
+    .options.hidden-mode .voting-dots { display: flex; }
+    .voting-dots span {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent, #6C63FF);
+      animation: dot-wave 1.4s ease-in-out infinite;
+    }
+    .voting-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .voting-dots span:nth-child(3) { animation-delay: 0.4s; }
+  </style>
+</head>
+<body>
+  <div id="waiting">
+    <div class="logo" id="waiting-logo" style="display:none"><img id="waiting-logo-img" src="" alt="Logo"></div>
+    <h1 id="waiting-title">🎵 Crowdpick</h1>
+    <p id="waiting-subtitle">La votación comenzará en breve...</p>
+    <div style="margin-top:32px">
+      <img id="waiting-qr-img" src="" alt="QR" style="border-radius:12px;width:160px;height:160px">
+      <div style="font-size:0.85rem;color:#aaa;margin-top:8px">Escaneá para votar</div>
+      <div id="waiting-qr-url" style="font-size:1rem;font-weight:600;margin-top:4px"></div>
+    </div>
+  </div>
+
+  <div id="poll-section">
+    <div class="header">
+      <div class="header-left">
+        <div class="header-logo" id="poll-logo" style="display:none"><img id="poll-logo-img" src="" alt="Logo"></div>
+        <div class="poll-title" id="poll-title"></div>
+      </div>
+      <div id="timer-box" style="display:none;text-align:center;min-width:80px">
+        <div id="timer-display" style="font-size:3rem;font-weight:700;line-height:1"></div>
+        <div style="font-size:0.75rem;color:#aaa;margin-top:2px">seg</div>
+      </div>
+      <div class="qr-box">
+        <img id="qr-img" src="" alt="QR">
+        <div class="qr-label">Escaneá para votar</div>
+        <div class="qr-url" id="qr-url"></div>
+      </div>
+    </div>
+    <div class="options" id="options-container"></div>
+  </div>
+
+  <!-- RANKING OVERLAY -->
+  <div id="ranking-overlay" style="display:none;position:fixed;inset:0;background:rgba(10,10,10,0.96);z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px 80px">
+    <div style="font-size:2.4rem;font-weight:700;margin-bottom:40px;letter-spacing:1px" id="ov-title">🏆 Ranking</div>
+    <div id="ov-list" style="width:100%;max-width:800px;display:flex;flex-direction:column;gap:14px"></div>
+  </div>
+
+  <div class="powered">Powered by Crowdpick</div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let currentOptions = [];
+    let pendingPoll = null;
+    let lastVotes = {};
+    let resultsHidden = false;
+    let appearance = {
+      bgColor: '#111111', textColor: '#ffffff',
+      accentColor: '#6C63FF', subtitleColor: '#aaaaaa',
+      font: 'Inter', logoUrl: ''
+    };
+    let localBaseUrl = window.location.href.replace(/\/[^/]*$/, '');
+    document.getElementById('waiting-qr-img').src = '/api/qr';
+    fetch('/api/ip').then(r => r.json()).then(d => {
+      localBaseUrl = `http://${d.ip}:${window.location.port || 80}`;
+      document.getElementById('waiting-qr-url').textContent = localBaseUrl;
+    });
+
+    // Cargar Google Fonts
+    const fontLink = document.createElement('link');
+    fontLink.rel = 'stylesheet';
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Oswald:wght@400;600;700&family=Poppins:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&family=Bebas+Neue&display=swap';
+    document.head.appendChild(fontLink);
+
+    fetch('/api/config').then(r => r.json()).then(cfg => {
+      appearance.accentColor = cfg.primaryColor;
+      applyAppearance();
+      if (pendingPoll) {
+        const { poll, votes } = pendingPoll;
+        pendingPoll = null;
+        showPoll(poll, votes);
+      }
+    });
+
+    socket.on('appearance-update', (data) => {
+      appearance = { ...appearance, ...data };
+      applyAppearance();
+    });
+
+    function applyAppearance() {
+      document.body.style.background = appearance.bgColor;
+      document.body.style.color = appearance.textColor;
+      document.body.style.fontFamily = `'${appearance.font}', sans-serif`;
+      document.documentElement.style.setProperty('--accent', appearance.accentColor);
+      document.getElementById('waiting-title').style.color = appearance.accentColor;
+      document.getElementById('waiting-subtitle').style.color = appearance.subtitleColor;
+      document.getElementById('qr-url').style.color = appearance.accentColor;
+      document.getElementById('waiting-qr-url').style.color = appearance.accentColor;
+
+      // Logo
+      if (appearance.logoUrl) {
+        document.getElementById('waiting-logo-img').src = appearance.logoUrl;
+        document.getElementById('waiting-logo').style.display = 'block';
+        document.getElementById('poll-logo-img').src = appearance.logoUrl;
+        document.getElementById('poll-logo').style.display = 'block';
+      } else {
+        document.getElementById('waiting-logo').style.display = 'none';
+        document.getElementById('poll-logo').style.display = 'none';
+      }
+
+      // Actualizar barras y contadores si hay votación activa
+      document.querySelectorAll('.bar-fill').forEach(bar => {
+        if (!bar.classList.contains('loser-bar')) bar.style.background = appearance.accentColor;
+      });
+      document.querySelectorAll('.vote-count').forEach(el => el.style.color = appearance.accentColor);
+      document.querySelectorAll('.option-desc').forEach(el => el.style.color = appearance.subtitleColor);
+    }
+
+    socket.on('update-waiting', ({ title, subtitle }) => {
+      if (title !== undefined) document.getElementById('waiting-title').textContent = title || '🎵 Crowdpick';
+      if (subtitle !== undefined) document.getElementById('waiting-subtitle').textContent = subtitle || 'La votación comenzará en breve...';
+    });
+
+    socket.on('poll-update', ({ poll, votes }) => {
+      if (!appearance) { pendingPoll = { poll, votes }; return; }
+      showPoll(poll, votes);
+    });
+
+    socket.on('votes-update', (votes) => {
+      lastVotes = votes;
+      if (!resultsHidden) updateBars(votes);
+    });
+
+    socket.on('results-visibility', ({ hidden, votes }) => {
+      resultsHidden = hidden;
+      lastVotes = votes;
+      const container = document.getElementById('options-container');
+      if (hidden) {
+        container.classList.add('hidden-mode');
+      } else {
+        container.classList.remove('hidden-mode');
+        updateBars(lastVotes);
+      }
+    });
+
+    socket.on('timer-update', ({ remaining, total }) => {
+      const box = document.getElementById('timer-box');
+      const disp = document.getElementById('timer-display');
+      box.style.display = remaining > 0 ? 'block' : 'none';
+      disp.textContent = remaining;
+      disp.style.color = remaining <= 10 ? '#c0392b' : remaining <= 20 ? '#e67e22' : appearance.accentColor;
+    });
+
+    socket.on('timer-clear', () => {
+      document.getElementById('timer-box').style.display = 'none';
+    });
+
+    let lastRanking = [];
+    socket.on('ranking-update', (ranking) => { lastRanking = ranking; });
+
+    socket.on('show-winner', ({ winnerId }) => {
+      const container = document.getElementById('options-container');
+      container.classList.remove('hidden-mode');
+      resultsHidden = false;
+      updateBars(lastVotes);
+
+      setTimeout(() => {
+        currentOptions.forEach(opt => {
+          const row = document.getElementById(`row-${opt.id}`);
+          if (!row) return;
+          row.classList.remove('winner', 'loser');
+          row.classList.add(opt.id === winnerId ? 'winner' : 'loser');
+          const bar = document.getElementById(`bar-${opt.id}`);
+          const name = row.querySelector('.option-name');
+          const count = document.getElementById(`count-${opt.id}`);
+          if (opt.id === winnerId) {
+            if (bar) bar.style.background = appearance.accentColor;
+            if (name) name.style.color = appearance.accentColor;
+            if (count) count.style.color = appearance.accentColor;
+          } else {
+            if (bar) bar.style.background = '#444';
+          }
+        });
+      }, 600);
+    });
+
+    socket.on('go-home', () => {
+      resultsHidden = false;
+      currentOptions = [];
+      const container = document.getElementById('options-container');
+      if (container) container.classList.remove('hidden-mode');
+      document.getElementById('poll-section').style.display = 'none';
+      document.getElementById('waiting').style.display = 'block';
+      document.getElementById('ranking-overlay').style.display = 'none';
+    });
+
+    function generateQR(url) {
+      document.getElementById('qr-img').src = '/api/qr';
+      document.getElementById('qr-url').textContent = url;
+      document.getElementById('qr-url').style.color = appearance.accentColor;
+    }
+
+    function showPoll(poll, votes) {
+      currentOptions = poll.options;
+      document.getElementById('ranking-overlay').style.display = 'none';
+      document.getElementById('waiting').style.display = 'none';
+      document.getElementById('poll-section').style.display = 'block';
+      document.getElementById('poll-title').textContent = poll.title;
+      document.getElementById('poll-title').style.color = appearance.textColor;
+      generateQR(localBaseUrl);
+      renderOptions(poll.options, votes);
+    }
+
+    function renderOptions(options, votes) {
+      const container = document.getElementById('options-container');
+      container.innerHTML = '';
+      container.classList.toggle('hidden-mode', resultsHidden);
+      options.forEach(opt => {
+        const row = document.createElement('div');
+        row.className = 'option-row';
+        row.id = `row-${opt.id}`;
+        row.innerHTML = `
+          <div class="option-info">
+            <div class="option-name" style="color:${appearance.textColor}">${opt.name}</div>
+            ${opt.description ? `<div class="option-desc" style="color:${appearance.subtitleColor}">${opt.description}</div>` : ''}
+            <div class="voting-dots"><span></span><span></span><span></span></div>
+          </div>
+          <div class="bar-container">
+            <div class="bar-fill" id="bar-${opt.id}" style="width:0%;background:${appearance.accentColor}"></div>
+          </div>
+          <div class="vote-count" id="count-${opt.id}" style="color:${appearance.accentColor}">0</div>
+          <div class="percent" id="pct-${opt.id}" style="color:${appearance.subtitleColor}">0%</div>
+          <div class="winner-badge" id="badge-${opt.id}">🏆</div>
+        `;
+        container.appendChild(row);
+      });
+      if (!resultsHidden) updateBars(votes);
+    }
+
+    function showRankingOverlay(ranking) {
+      const ov = document.getElementById('ranking-overlay');
+      const list = document.getElementById('ov-list');
+      document.getElementById('ov-title').style.color = appearance.accentColor;
+      list.innerHTML = ranking.slice(0, 10).map((p, i) => {
+        const medals = ['🥇','🥈','🥉'];
+        const medal = medals[i] || `${i+1}.`;
+        const pct = Math.round((p.score / Math.max(...ranking.map(r=>r.score), 1)) * 100);
+        return `
+          <div style="display:flex;align-items:center;gap:20px;background:#1a1a1a;border-radius:14px;padding:16px 24px">
+            <div style="font-size:1.8rem;width:48px;text-align:center;flex-shrink:0">${medal}</div>
+            <div style="flex:1">
+              <div style="font-size:1.3rem;font-weight:700">${p.name}</div>
+              <div style="height:8px;background:#2a2a2a;border-radius:4px;margin-top:8px;overflow:hidden">
+                <div style="height:100%;width:${pct}%;background:${appearance.accentColor};border-radius:4px;transition:width 0.6s ease"></div>
+              </div>
+            </div>
+            <div style="font-size:1.8rem;font-weight:700;color:${appearance.accentColor};min-width:60px;text-align:right">${p.score}</div>
+          </div>
+        `;
+      }).join('');
+      ov.style.display = 'flex';
+    }
+
+    socket.on('show-display-ranking', (ranking) => { showRankingOverlay(ranking); });
+    socket.on('hide-display-ranking', () => { document.getElementById('ranking-overlay').style.display = 'none'; });
+
+    function updateBars(votes) {
+      const total = Object.values(votes).reduce((a, b) => a + b, 0);
+      currentOptions.forEach(opt => {
+        const v = votes[opt.id] || 0;
+        const pct = total > 0 ? Math.round((v / total) * 100) : 0;
+        const bar = document.getElementById(`bar-${opt.id}`);
+        const count = document.getElementById(`count-${opt.id}`);
+        const pctEl = document.getElementById(`pct-${opt.id}`);
+        if (bar) bar.style.width = pct + '%';
+        if (count) count.textContent = v;
+        if (pctEl) pctEl.textContent = pct + '%';
+      });
+    }
+  </script>
+</body>
+</html>
