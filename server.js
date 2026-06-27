@@ -11,7 +11,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
-const VENUE_NAME = process.env.VENUE_NAME || 'Crowdpick';
+const VENUE_NAME = process.env.VENUE_NAME || 'Media Trivia';
 const PRIMARY_COLOR = process.env.PRIMARY_COLOR || '#6C63FF';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'crowdpick2024';
 
@@ -29,7 +29,9 @@ function getLocalIP() {
 }
 
 const LOCAL_IP = getLocalIP();
+const PUBLIC_BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://${LOCAL_IP}:${PORT}`;
 console.log(`IP local detectada: ${LOCAL_IP}`);
+console.log(`URL pública: ${PUBLIC_BASE_URL}`);
 console.log(`Venue: ${VENUE_NAME}`);
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -45,7 +47,7 @@ app.get('/admin', (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crowdpick — Acceso</title>
+  <title>Media Trivia — Acceso</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #111; color: #fff; font-family: 'Segoe UI', sans-serif;
@@ -86,12 +88,11 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-app.get('/api/ip', (req, res) => res.json({ ip: LOCAL_IP }));
+app.get('/api/ip', (req, res) => res.json({ url: PUBLIC_BASE_URL }));
 app.get('/api/config', (req, res) => res.json({ venueName: VENUE_NAME, primaryColor: PRIMARY_COLOR }));
 app.get('/api/appearance', (req, res) => res.json(appearance));
 app.get('/api/qr', async (req, res) => {
-  const url = `http://${LOCAL_IP}:${PORT}`;
-  const png = await QRCode.toBuffer(url, { width: 200, margin: 1 });
+  const png = await QRCode.toBuffer(PUBLIC_BASE_URL, { width: 200, margin: 1 });
   res.setHeader('Content-Type', 'image/png');
   res.send(png);
 });
@@ -111,7 +112,7 @@ let displayRanking = false;
 let appearance = {
   bgColor: '#111111', textColor: '#ffffff',
   accentColor: PRIMARY_COLOR, subtitleColor: '#aaaaaa',
-  font: 'Inter', logoUrl: ''
+  font: 'Bebas Neue', logoUrl: '/logo.png'
 };
 
 // Quiz / Cola
@@ -270,7 +271,7 @@ io.on('connection', (socket) => {
   socket.on('update-waiting', (data) => { waitingScreen = data; socket.broadcast.emit('update-waiting', data); });
   socket.on('update-appearance', (data) => { appearance = { ...appearance, ...data }; socket.broadcast.emit('appearance-update', appearance); });
   socket.on('reset-appearance', () => {
-    appearance = { bgColor: '#111111', textColor: '#ffffff', accentColor: PRIMARY_COLOR, subtitleColor: '#aaaaaa', font: 'Inter', logoUrl: '' };
+    appearance = { bgColor: '#111111', textColor: '#ffffff', accentColor: PRIMARY_COLOR, subtitleColor: '#aaaaaa', font: 'Bebas Neue', logoUrl: '/logo.png' };
     io.emit('appearance-update', appearance);
   });
 
@@ -374,5 +375,5 @@ io.on('connection', (socket) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Servidor corriendo en http://${LOCAL_IP}:${PORT}`);
+  console.log(`Servidor corriendo en ${PUBLIC_BASE_URL}`);
 });

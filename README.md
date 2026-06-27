@@ -47,13 +47,18 @@ ADMIN_PASSWORD=tu_contraseña
 
 ---
 
-## Deploy en Railway
+## Deploy en Render
 
 1. Subí el repo a GitHub
-2. Creá un proyecto en [Railway](https://railway.app)
-3. Conectá el repo
-4. Configurá las variables de entorno en Railway
-5. Deploy automático
+2. Creá una cuenta en [Render](https://render.com) y conectá tu GitHub
+3. New → Web Service → elegí el repo
+4. Build command: `npm install` — Start command: `node server.js`
+5. Configurá las variables de entorno (`VENUE_NAME`, `PRIMARY_COLOR`, `ADMIN_PASSWORD`) — no hace falta `PORT`, Render lo inyecta solo
+6. Deploy automático en cada push a `main`
+
+El servidor detecta `RENDER_EXTERNAL_URL` (variable que Render inyecta sola) para generar el QR y la URL pública mostradas en `/display`. En local, sin esa variable, usa la IP de tu red.
+
+> Nota: el plan free de Render duerme el servicio tras un rato de inactividad — la primera request después de eso tarda ~30-60s. Conviene abrir `/admin` unos minutos antes del evento para "despertarlo".
 
 ---
 

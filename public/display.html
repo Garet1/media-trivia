@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Crowdpick — Display</title>
+  <title>Media Trivia — Display</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -143,11 +143,11 @@
       accentColor: '#6C63FF', subtitleColor: '#aaaaaa',
       font: 'Inter', logoUrl: ''
     };
-    let localBaseUrl = window.location.href.replace(/\/[^/]*$/, '');
+    let publicUrl = '';
     document.getElementById('waiting-qr-img').src = '/api/qr';
     fetch('/api/ip').then(r => r.json()).then(d => {
-      localBaseUrl = `http://${d.ip}:${window.location.port || 80}`;
-      document.getElementById('waiting-qr-url').textContent = localBaseUrl;
+      publicUrl = d.url;
+      document.getElementById('waiting-qr-url').textContent = publicUrl;
     });
 
     // Cargar Google Fonts
@@ -291,7 +291,7 @@
       document.getElementById('poll-section').style.display = 'block';
       document.getElementById('poll-title').textContent = poll.title;
       document.getElementById('poll-title').style.color = appearance.textColor;
-      generateQR(localBaseUrl);
+      generateQR(publicUrl);
       renderOptions(poll.options, votes);
     }
 
