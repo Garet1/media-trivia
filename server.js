@@ -4,6 +4,8 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const os = require('os');
+const fs = require('fs');
+const crypto = require('crypto');
 const QRCode = require('qrcode');
 
 const app = express();
@@ -13,7 +15,11 @@ const io = new Server(server);
 const PORT = process.env.PORT || 3000;
 const VENUE_NAME = process.env.VENUE_NAME || 'Media Trivia';
 const PRIMARY_COLOR = process.env.PRIMARY_COLOR || '#6C63FF';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'crowdpick2024';
+let ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!ADMIN_PASSWORD) {
+  ADMIN_PASSWORD = crypto.randomBytes(4).toString('hex');
+  console.warn(`⚠️  ADMIN_PASSWORD no configurada. Usando contraseña temporal: ${ADMIN_PASSWORD}`);
+}
 
 function getLocalIP() {
   const interfaces = os.networkInterfaces();
@@ -106,7 +112,20 @@ let timer = null;
 let timerRemaining = 0;
 let timerTotal = 0;
 let waitingScreen = { title: '', subtitle: '' };
-let players = {};
+
+const PLAYERS_FILE = path.join(__dirname, 'data', 'players.json');
+function loadPlayers() {
+  try { return JSON.parse(fs.readFileSync(PLAYERS_FILE, 'utf8')); }
+  catch { return {}; }
+}
+function savePlayers() {
+  try {
+    fs.mkdirSync(path.dirname(PLAYERS_FILE), { recursive: true });
+    fs.writeFileSync(PLAYERS_FILE, JSON.stringify(players));
+  } catch (err) { console.error('No se pudo guardar el ranking:', err.message); }
+}
+
+let players = loadPlayers();
 let votedInPoll = {};
 let displayRanking = false;
 let appearance = {
@@ -291,6 +310,7 @@ io.on('connection', (socket) => {
     if (!players[key]) players[key] = { name, docLast3, score: 0 };
     if (currentPoll.correctId && optionId === currentPoll.correctId) {
       players[key].score++;
+      savePlayers();
       emitRanking();
     }
   });
@@ -315,7 +335,7 @@ io.on('connection', (socket) => {
     io.emit('queue-state', getQueueState());
   });
 
-  socket.on('reset-ranking', () => { players = {}; emitRanking(); });
+  socket.on('reset-ranking', () => { players = {}; savePlayers(); emitRanking(); });
 
   socket.on('toggle-display-ranking', () => {
     displayRanking = !displayRanking;

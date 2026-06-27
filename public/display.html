@@ -95,7 +95,7 @@
 <body>
   <div id="waiting">
     <div class="logo" id="waiting-logo" style="display:none"><img id="waiting-logo-img" src="" alt="Logo"></div>
-    <h1 id="waiting-title">🎵 Crowdpick</h1>
+    <h1 id="waiting-title">🎵 Media Trivia</h1>
     <p id="waiting-subtitle">La votación comenzará en breve...</p>
     <div style="margin-top:32px">
       <img id="waiting-qr-img" src="" alt="QR" style="border-radius:12px;width:160px;height:160px">
@@ -129,7 +129,7 @@
     <div id="ov-list" style="width:100%;max-width:800px;display:flex;flex-direction:column;gap:14px"></div>
   </div>
 
-  <div class="powered">Powered by Crowdpick</div>
+  <div class="powered">Powered by Media Trivia</div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
@@ -201,7 +201,7 @@
     }
 
     socket.on('update-waiting', ({ title, subtitle }) => {
-      if (title !== undefined) document.getElementById('waiting-title').textContent = title || '🎵 Crowdpick';
+      if (title !== undefined) document.getElementById('waiting-title').textContent = title || '🎵 Media Trivia';
       if (subtitle !== undefined) document.getElementById('waiting-subtitle').textContent = subtitle || 'La votación comenzará en breve...';
     });
 

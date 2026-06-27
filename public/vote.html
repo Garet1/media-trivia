@@ -107,7 +107,7 @@
   <!-- ESPERA -->
   <div id="waiting" style="display:none">
     <div class="logo-container" id="waiting-logo"><img id="waiting-logo-img" src="" alt="Logo"></div>
-    <h2 id="waiting-title">🎵 Crowdpick</h2>
+    <h2 id="waiting-title">🎵 Media Trivia</h2>
     <p id="waiting-subtitle">Esperando la próxima pregunta...</p>
   </div>
 
@@ -151,7 +151,7 @@
     <div class="label">seg</div>
   </div>
   <div class="player-tag" id="player-tag"></div>
-  <div class="powered">Powered by Crowdpick</div>
+  <div class="powered">Powered by Media Trivia</div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
@@ -235,7 +235,7 @@
     }
 
     socket.on('update-waiting', ({ title, subtitle }) => {
-      if (title !== undefined) document.getElementById('waiting-title').textContent = title || '🎵 Crowdpick';
+      if (title !== undefined) document.getElementById('waiting-title').textContent = title || '🎵 Media Trivia';
       if (subtitle !== undefined) document.getElementById('waiting-subtitle').textContent = subtitle || 'Esperando la próxima pregunta...';
     });
 
