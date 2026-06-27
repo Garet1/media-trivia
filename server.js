@@ -176,12 +176,20 @@ const QUEUE_ADVANCE_DELAY = 8000;
 
 // ── Funciones de poll ────────────────────────────────────────────────────────
 function doStartPoll(pollData) {
+  startIntro(pollData.title, 'Siguiente pregunta', pollData);
+}
+
+function startQuizIntro(quizName, pollData) {
+  startIntro(quizName, 'Ya comienza el siguiente cuestionario', pollData);
+}
+
+function startIntro(introTitle, introLabel, pollData) {
   if (timer) { clearInterval(timer); timer = null; }
   if (queueAdvanceTimer) { clearTimeout(queueAdvanceTimer); queueAdvanceTimer = null; }
   if (introTimer) { clearTimeout(introTimer); introTimer = null; }
   currentPoll = null;
   if (displayRanking) { displayRanking = false; io.emit('hide-display-ranking'); }
-  pollIntro = { title: pollData.title, seconds: POLL_INTRO_SECONDS };
+  pollIntro = { title: introTitle, label: introLabel, seconds: POLL_INTRO_SECONDS };
   io.emit('poll-intro', pollIntro);
   introTimer = setTimeout(() => {
     introTimer = null;
@@ -259,13 +267,18 @@ function launchCurrentQueueQuestion() {
   const quiz = activeQueue[queueIdx];
   if (!quiz) { endQueue(); return; }
   const question = quiz.questions[queueQuestionIdx];
-  doStartPoll({
+  const pollData = {
     title: question.title,
     options: question.options,
     correctId: question.correctId,
     hideResults: quiz.hideResults || false,
     timerSeconds: quiz.timerSeconds || 0
-  });
+  };
+  if (queueQuestionIdx === 0) {
+    startQuizIntro(quiz.name, pollData);
+  } else {
+    launchPoll(pollData);
+  }
   io.emit('queue-state', getQueueState());
 }
 

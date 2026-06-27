@@ -109,7 +109,7 @@
   </div>
 
   <div id="poll-intro">
-    <div class="intro-label">Siguiente pregunta</div>
+    <div class="intro-label" id="intro-label">Siguiente pregunta</div>
     <h1 id="intro-title"></h1>
     <div class="intro-countdown" id="intro-countdown"></div>
   </div>
@@ -220,11 +220,12 @@
     });
 
     let introCountdownInterval = null;
-    socket.on('poll-intro', ({ title, seconds }) => {
+    socket.on('poll-intro', ({ title, seconds, label }) => {
       document.getElementById('waiting').style.display = 'none';
       document.getElementById('poll-section').style.display = 'none';
       document.getElementById('ranking-overlay').style.display = 'none';
       document.getElementById('poll-intro').style.display = 'block';
+      document.getElementById('intro-label').textContent = label || 'Siguiente pregunta';
       document.getElementById('intro-title').textContent = title;
       let remaining = seconds;
       document.getElementById('intro-countdown').textContent = remaining;

@@ -117,7 +117,7 @@
 
   <!-- INTRO PREGUNTA -->
   <div id="poll-intro">
-    <div class="intro-label">Siguiente pregunta</div>
+    <div class="intro-label" id="intro-label">Siguiente pregunta</div>
     <h2 id="intro-title"></h2>
     <div class="intro-countdown" id="intro-countdown"></div>
   </div>
@@ -263,10 +263,11 @@
     }
 
     let introCountdownInterval = null;
-    socket.on('poll-intro', ({ title, seconds }) => {
+    socket.on('poll-intro', ({ title, seconds, label }) => {
       if (!player) return;
       hideAll();
       document.getElementById('poll-intro').style.display = 'block';
+      document.getElementById('intro-label').textContent = label || 'Siguiente pregunta';
       document.getElementById('intro-title').textContent = title;
       let remaining = seconds;
       document.getElementById('intro-countdown').textContent = remaining;
