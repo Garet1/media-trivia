@@ -38,6 +38,10 @@
     #waiting { text-align: center; }
     #waiting h2 { font-size: 1.4rem; }
     #waiting p { margin-top: 10px; font-size: 0.85rem; transition: color 0.4s; }
+    #poll-intro { display: none; text-align: center; }
+    #poll-intro .intro-label { font-size: 0.8rem; color: #aaa; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+    #poll-intro h2 { font-size: 1.3rem; max-width: 380px; }
+    #poll-intro .intro-countdown { font-size: 3rem; font-weight: 700; margin-top: 20px; transition: color 0.4s; }
 
     /* Login */
     #login-screen { width: 100%; max-width: 340px; text-align: center; }
@@ -109,6 +113,13 @@
     <div class="logo-container" id="waiting-logo"><img id="waiting-logo-img" src="" alt="Logo"></div>
     <h2 id="waiting-title">🎵 Media Trivia</h2>
     <p id="waiting-subtitle">Esperando la próxima pregunta...</p>
+  </div>
+
+  <!-- INTRO PREGUNTA -->
+  <div id="poll-intro">
+    <div class="intro-label">Siguiente pregunta</div>
+    <h2 id="intro-title"></h2>
+    <div class="intro-countdown" id="intro-countdown"></div>
   </div>
 
   <!-- PREGUNTA -->
@@ -214,6 +225,7 @@
       document.body.style.fontFamily = `'${appearance.font}', sans-serif`;
       document.getElementById('waiting-title').style.color = appearance.accentColor;
       document.getElementById('waiting-subtitle').style.color = appearance.subtitleColor;
+      document.getElementById('intro-countdown').style.color = appearance.accentColor;
       document.getElementById('thanks-title').style.color = appearance.accentColor;
       document.getElementById('thanks-sub').style.color = appearance.subtitleColor;
       document.getElementById('winner-label').style.color = appearance.subtitleColor;
@@ -240,7 +252,7 @@
     });
 
     function hideAll() {
-      ['login-screen','waiting','poll-section','thanks','winner-announcement','vote-ranking','next-question-countdown','final-screen']
+      ['login-screen','waiting','poll-intro','poll-section','thanks','winner-announcement','vote-ranking','next-question-countdown','final-screen']
         .forEach(id => document.getElementById(id).style.display = 'none');
     }
 
@@ -250,7 +262,24 @@
       else document.getElementById('waiting').style.display = 'block';
     }
 
+    let introCountdownInterval = null;
+    socket.on('poll-intro', ({ title, seconds }) => {
+      if (!player) return;
+      hideAll();
+      document.getElementById('poll-intro').style.display = 'block';
+      document.getElementById('intro-title').textContent = title;
+      let remaining = seconds;
+      document.getElementById('intro-countdown').textContent = remaining;
+      if (introCountdownInterval) clearInterval(introCountdownInterval);
+      introCountdownInterval = setInterval(() => {
+        remaining--;
+        document.getElementById('intro-countdown').textContent = Math.max(remaining, 0);
+        if (remaining <= 0) clearInterval(introCountdownInterval);
+      }, 1000);
+    });
+
     socket.on('poll-update', ({ poll }) => {
+      if (introCountdownInterval) { clearInterval(introCountdownInterval); introCountdownInterval = null; }
       if (!player) { pendingPoll = { poll }; return; }
       handlePollUpdate({ poll });
     });

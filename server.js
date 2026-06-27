@@ -104,8 +104,34 @@ app.get('/api/qr', async (req, res) => {
   res.send(png);
 });
 
+app.get('/api/export', (req, res) => {
+  if (req.query.pwd !== ADMIN_PASSWORD) return res.status(401).json({ error: 'No autorizado' });
+  const backup = { exportedAt: new Date().toISOString(), players, quizLibrary };
+  res.setHeader('Content-Disposition', `attachment; filename="media-trivia-backup-${Date.now()}.json"`);
+  res.json(backup);
+});
+
+app.post('/api/import', express.json({ limit: '2mb' }), (req, res) => {
+  if (req.query.pwd !== ADMIN_PASSWORD) return res.status(401).json({ error: 'No autorizado' });
+  const { players: importedPlayers, quizLibrary: importedQuizzes } = req.body || {};
+  if (importedPlayers && typeof importedPlayers === 'object') {
+    players = importedPlayers;
+    savePlayers();
+  }
+  if (Array.isArray(importedQuizzes)) {
+    quizLibrary = importedQuizzes;
+    saveQuizzes();
+  }
+  emitRanking();
+  io.emit('quiz-library-update', quizLibrary);
+  res.json({ ok: true });
+});
+
 // ── Estado ──────────────────────────────────────────────────────────────────
+const POLL_INTRO_SECONDS = 5;
 let currentPoll = null;
+let pollIntro = null;
+let introTimer = null;
 let votes = {};
 let winnerVisible = false;
 let resultsHidden = false;
@@ -152,13 +178,25 @@ const QUEUE_ADVANCE_DELAY = 8000;
 function doStartPoll(pollData) {
   if (timer) { clearInterval(timer); timer = null; }
   if (queueAdvanceTimer) { clearTimeout(queueAdvanceTimer); queueAdvanceTimer = null; }
+  if (introTimer) { clearTimeout(introTimer); introTimer = null; }
+  currentPoll = null;
+  if (displayRanking) { displayRanking = false; io.emit('hide-display-ranking'); }
+  pollIntro = { title: pollData.title, seconds: POLL_INTRO_SECONDS };
+  io.emit('poll-intro', pollIntro);
+  introTimer = setTimeout(() => {
+    introTimer = null;
+    pollIntro = null;
+    launchPoll(pollData);
+  }, POLL_INTRO_SECONDS * 1000);
+}
+
+function launchPoll(pollData) {
   currentPoll = { ...pollData, id: Date.now().toString() };
   votes = {};
   votedInPoll = {};
   winnerVisible = false;
   resultsHidden = !!pollData.hideResults;
   pollData.options.forEach(opt => { votes[opt.id] = 0; });
-  if (displayRanking) { displayRanking = false; io.emit('hide-display-ranking'); }
   io.emit('poll-update', { poll: currentPoll, votes });
   io.emit('results-visibility', { hidden: resultsHidden, votes });
   io.emit('queue-advance-countdown', { seconds: 0 });
@@ -278,6 +316,7 @@ io.on('connection', (socket) => {
   // Sync completo al conectar
   socket.emit('appearance-update', appearance);
   if (waitingScreen.title || waitingScreen.subtitle) socket.emit('update-waiting', waitingScreen);
+  if (pollIntro) socket.emit('poll-intro', pollIntro);
   if (currentPoll) {
     socket.emit('poll-update', { poll: currentPoll, votes });
     if (winnerVisible) {
@@ -325,6 +364,8 @@ io.on('connection', (socket) => {
   socket.on('reset-display', () => {
     if (timer) { clearInterval(timer); timer = null; }
     if (queueAdvanceTimer) { clearTimeout(queueAdvanceTimer); queueAdvanceTimer = null; }
+    if (introTimer) { clearTimeout(introTimer); introTimer = null; }
+    pollIntro = null;
     queuePlaying = false;
     timerRemaining = 0;
     currentPoll = null;

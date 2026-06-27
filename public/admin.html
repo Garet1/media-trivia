@@ -283,12 +283,27 @@
     </div>
   </div>
 
+  <!-- BACKUP DE SESIÓN -->
+  <div class="collapsible" id="collapse-backup">
+    <div class="collapsible-header" onclick="toggleCollapse('backup')">
+      <span class="collapsible-title">💾 Backup de sesión</span>
+      <span class="collapsible-arrow">▼</span>
+    </div>
+    <div class="collapsible-body">
+      <p style="color:#555;font-size:0.8rem;margin-bottom:12px">Guardá el ranking y los cuestionarios en un archivo para no perderlos si el servidor se reinicia. Después lo podés importar para recuperarlos.</p>
+      <button class="btn-outline" onclick="exportSession()">⬇️ Exportar sesión</button>
+      <input type="file" id="import-file-input" accept="application/json" style="display:none" onchange="importSession(event)">
+      <button class="btn-outline" style="margin-top:8px" onclick="document.getElementById('import-file-input').click()">⬆️ Importar sesión</button>
+    </div>
+  </div>
+
   <div class="status" id="status"></div>
   <div class="powered">Powered by <span>Media Trivia</span></div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
+    const ADMIN_PWD = new URLSearchParams(window.location.search).get('pwd') || '';
     let PRIMARY_COLOR = '#6C63FF';
     let VENUE_NAME = 'Media Trivia';
     let logoBase64 = '';
@@ -678,6 +693,42 @@
     }
 
     // ── Utilidades ──────────────────────────────────────────────────────────
+    async function exportSession() {
+      try {
+        const res = await fetch(`/api/export?pwd=${encodeURIComponent(ADMIN_PWD)}`);
+        if (!res.ok) throw new Error('No autorizado');
+        const data = await res.json();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `media-trivia-backup-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showStatus('✅ Sesión exportada', true);
+      } catch (err) {
+        showStatus('❌ No se pudo exportar: ' + err.message, false);
+      }
+    }
+
+    async function importSession(event) {
+      const file = event.target.files[0];
+      event.target.value = '';
+      if (!file) return;
+      try {
+        const data = JSON.parse(await file.text());
+        const res = await fetch(`/api/import?pwd=${encodeURIComponent(ADMIN_PWD)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error('No autorizado');
+        showStatus('✅ Sesión importada', true);
+      } catch (err) {
+        showStatus('❌ No se pudo importar: ' + err.message, false);
+      }
+    }
+
     function showStatus(msg, ok) {
       const el = document.getElementById('status');
       el.textContent = msg;

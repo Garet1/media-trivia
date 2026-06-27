@@ -23,6 +23,10 @@
     #waiting h1 { font-size: 3rem; }
     #waiting p { font-size: 1.2rem; color: #555; margin-top: 16px; transition: color 0.4s; }
     #poll-section { display: none; width: 100%; max-width: 1000px; }
+    #poll-intro { display: none; text-align: center; }
+    #poll-intro .intro-label { font-size: 1.1rem; color: #aaa; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 18px; }
+    #poll-intro h1 { font-size: 2.6rem; font-weight: 700; max-width: 900px; }
+    #poll-intro .intro-countdown { font-size: 6rem; font-weight: 700; margin-top: 36px; transition: color 0.4s; }
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
     .header-left { display: flex; align-items: center; gap: 20px; }
     .header-logo img { max-height: 60px; max-width: 160px; object-fit: contain; }
@@ -104,6 +108,12 @@
     </div>
   </div>
 
+  <div id="poll-intro">
+    <div class="intro-label">Siguiente pregunta</div>
+    <h1 id="intro-title"></h1>
+    <div class="intro-countdown" id="intro-countdown"></div>
+  </div>
+
   <div id="poll-section">
     <div class="header">
       <div class="header-left">
@@ -183,6 +193,7 @@
       document.getElementById('waiting-subtitle').style.color = appearance.subtitleColor;
       document.getElementById('qr-url').style.color = appearance.accentColor;
       document.getElementById('waiting-qr-url').style.color = appearance.accentColor;
+      document.getElementById('intro-countdown').style.color = appearance.accentColor;
 
       // Logo
       if (appearance.logoUrl) {
@@ -208,7 +219,26 @@
       if (subtitle !== undefined) document.getElementById('waiting-subtitle').textContent = subtitle || 'La votación comenzará en breve...';
     });
 
+    let introCountdownInterval = null;
+    socket.on('poll-intro', ({ title, seconds }) => {
+      document.getElementById('waiting').style.display = 'none';
+      document.getElementById('poll-section').style.display = 'none';
+      document.getElementById('ranking-overlay').style.display = 'none';
+      document.getElementById('poll-intro').style.display = 'block';
+      document.getElementById('intro-title').textContent = title;
+      let remaining = seconds;
+      document.getElementById('intro-countdown').textContent = remaining;
+      if (introCountdownInterval) clearInterval(introCountdownInterval);
+      introCountdownInterval = setInterval(() => {
+        remaining--;
+        document.getElementById('intro-countdown').textContent = Math.max(remaining, 0);
+        if (remaining <= 0) clearInterval(introCountdownInterval);
+      }, 1000);
+    });
+
     socket.on('poll-update', ({ poll, votes }) => {
+      if (introCountdownInterval) { clearInterval(introCountdownInterval); introCountdownInterval = null; }
+      document.getElementById('poll-intro').style.display = 'none';
       if (!appearance) { pendingPoll = { poll, votes }; return; }
       showPoll(poll, votes);
     });
@@ -276,6 +306,8 @@
       currentOptions = [];
       const container = document.getElementById('options-container');
       if (container) container.classList.remove('hidden-mode');
+      if (introCountdownInterval) { clearInterval(introCountdownInterval); introCountdownInterval = null; }
+      document.getElementById('poll-intro').style.display = 'none';
       document.getElementById('poll-section').style.display = 'none';
       document.getElementById('waiting').style.display = 'block';
       document.getElementById('ranking-overlay').style.display = 'none';
