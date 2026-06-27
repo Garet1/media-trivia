@@ -94,6 +94,7 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
+app.get('/api/ping', (req, res) => res.json({ ok: true }));
 app.get('/api/ip', (req, res) => res.json({ url: PUBLIC_BASE_URL }));
 app.get('/api/config', (req, res) => res.json({ venueName: VENUE_NAME, primaryColor: PRIMARY_COLOR }));
 app.get('/api/appearance', (req, res) => res.json(appearance));
@@ -113,19 +114,23 @@ let timerRemaining = 0;
 let timerTotal = 0;
 let waitingScreen = { title: '', subtitle: '' };
 
-const PLAYERS_FILE = path.join(__dirname, 'data', 'players.json');
-function loadPlayers() {
-  try { return JSON.parse(fs.readFileSync(PLAYERS_FILE, 'utf8')); }
-  catch { return {}; }
+function loadJSON(file, fallback) {
+  try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
+  catch { return fallback; }
 }
-function savePlayers() {
+function saveJSON(file, data) {
   try {
-    fs.mkdirSync(path.dirname(PLAYERS_FILE), { recursive: true });
-    fs.writeFileSync(PLAYERS_FILE, JSON.stringify(players));
-  } catch (err) { console.error('No se pudo guardar el ranking:', err.message); }
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(data));
+  } catch (err) { console.error(`No se pudo guardar ${path.basename(file)}:`, err.message); }
 }
 
-let players = loadPlayers();
+const PLAYERS_FILE = path.join(__dirname, 'data', 'players.json');
+const QUIZZES_FILE = path.join(__dirname, 'data', 'quizzes.json');
+function savePlayers() { saveJSON(PLAYERS_FILE, players); }
+function saveQuizzes() { saveJSON(QUIZZES_FILE, quizLibrary); }
+
+let players = loadJSON(PLAYERS_FILE, {});
 let votedInPoll = {};
 let displayRanking = false;
 let appearance = {
@@ -135,7 +140,7 @@ let appearance = {
 };
 
 // Quiz / Cola
-let quizLibrary = [];
+let quizLibrary = loadJSON(QUIZZES_FILE, []);
 let activeQueue = [];
 let queueIdx = 0;
 let queueQuestionIdx = 0;
@@ -351,12 +356,14 @@ io.on('connection', (socket) => {
     } else {
       quizLibrary.push({ ...quiz, id: Date.now().toString() });
     }
+    saveQuizzes();
     io.emit('quiz-library-update', quizLibrary);
   });
 
   socket.on('delete-quiz', (quizId) => {
     quizLibrary = quizLibrary.filter(q => q.id !== quizId);
     activeQueue = activeQueue.filter(q => q.id !== quizId);
+    saveQuizzes();
     io.emit('quiz-library-update', quizLibrary);
     io.emit('queue-state', getQueueState());
   });

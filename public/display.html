@@ -150,6 +150,9 @@
       document.getElementById('waiting-qr-url').textContent = publicUrl;
     });
 
+    // Mantiene despierto el server (free tier de Render duerme tras 15min sin requests)
+    setInterval(() => { fetch('/api/ping').catch(() => {}); }, 5 * 60 * 1000);
+
     // Cargar Google Fonts
     const fontLink = document.createElement('link');
     fontLink.rel = 'stylesheet';
