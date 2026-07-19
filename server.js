@@ -129,6 +129,9 @@ app.post('/api/import', express.json({ limit: '2mb' }), (req, res) => {
 
 // ── Estado ──────────────────────────────────────────────────────────────────
 const POLL_INTRO_SECONDS = 5;
+const MAX_PLAYERS = parseInt(process.env.MAX_PLAYERS || '150', 10);
+const knownPlayers = new Set();   // name|docLast3 únicos en esta sesión
+const socketToPlayer = new Map(); // socketId → key
 let currentPoll = null;
 let pollIntro = null;
 let introTimer = null;
@@ -452,7 +455,27 @@ io.on('connection', (socket) => {
 
   socket.on('stop-queue', () => { endQueue(); });
 
-  socket.on('disconnect', () => { console.log('Cliente desconectado:', socket.id); });
+  socket.on('join-game', ({ name, docLast3 }) => {
+    if (!name || !docLast3) return;
+    const key = `${name}|${docLast3}`;
+    if (knownPlayers.has(key)) {
+      socketToPlayer.set(socket.id, key);
+      socket.emit('join-ok');
+      return;
+    }
+    if (knownPlayers.size >= MAX_PLAYERS) {
+      socket.emit('room-full', { max: MAX_PLAYERS });
+      return;
+    }
+    knownPlayers.add(key);
+    socketToPlayer.set(socket.id, key);
+    socket.emit('join-ok');
+  });
+
+  socket.on('disconnect', () => {
+    socketToPlayer.delete(socket.id);
+    console.log('Cliente desconectado:', socket.id);
+  });
 });
 
 server.listen(PORT, '0.0.0.0', () => {

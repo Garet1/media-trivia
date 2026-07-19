@@ -92,6 +92,10 @@
     #vote-timer { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); display: none; text-align: center; }
     #vote-timer .secs { font-size: 1.8rem; font-weight: 700; line-height: 1; }
     #vote-timer .label { font-size: 0.7rem; color: #555; }
+    #room-full-screen { display: none; text-align: center; padding: 20px; }
+    #room-full-screen .rf-icon { font-size: 3rem; margin-bottom: 16px; }
+    #room-full-screen h2 { font-size: 1.5rem; margin-bottom: 12px; }
+    #room-full-screen p { font-size: 0.88rem; color: #aaa; margin-top: 8px; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -104,8 +108,15 @@
     <input class="login-input" type="tel" id="login-doc" placeholder="Últimos 3 números de tu DNI"
       maxlength="3" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
       oninput="this.value=this.value.replace(/\D/g,'').slice(0,3)">
-    <button class="login-btn" onclick="doLogin()">Ingresar →</button>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Ingresar →</button>
     <div class="login-error" id="login-error">Completá ambos campos (DNI: solo 3 dígitos)</div>
+  </div>
+
+  <!-- CUPO COMPLETO -->
+  <div id="room-full-screen">
+    <div class="rf-icon">🎟️</div>
+    <h2>Cupo completo</h2>
+    <p>Hemos alcanzado el máximo de <span id="room-full-max">150</span> participantes.<br>¡Seguí el juego en la pantalla grande!</p>
   </div>
 
   <!-- ESPERA -->
@@ -174,6 +185,35 @@
     let pendingPoll = null;
     let lastRanking = [];
     let countdownInterval = null;
+    let isRoomFull = false;
+    let pendingPlayer = null;
+
+    socket.on('connect', () => {
+      if (player) socket.emit('join-game', { name: player.name, docLast3: player.docLast3 });
+    });
+
+    socket.on('join-ok', () => {
+      isRoomFull = false;
+      if (!pendingPlayer) return;
+      player = pendingPlayer;
+      pendingPlayer = null;
+      localStorage.setItem('crowdpick_player', JSON.stringify(player));
+      document.getElementById('player-tag').textContent = player.name;
+      document.getElementById('login-screen').style.display = 'none';
+      if (pendingPoll) { handlePollUpdate(pendingPoll); pendingPoll = null; }
+      else document.getElementById('waiting').style.display = 'block';
+    });
+
+    socket.on('room-full', ({ max }) => {
+      isRoomFull = true;
+      pendingPlayer = null;
+      const btn = document.getElementById('login-btn');
+      if (btn) { btn.disabled = false; btn.textContent = 'Ingresar →'; }
+      hideAll();
+      document.getElementById('room-full-max').textContent = max;
+      document.getElementById('room-full-screen').style.display = 'block';
+    });
+
     let appearance = {
       bgColor: '#111111', textColor: '#ffffff',
       accentColor: '#6C63FF', subtitleColor: '#aaaaaa',
@@ -199,12 +239,10 @@
       if (!name || !/^\d{1,3}$/.test(doc3)) {
         document.getElementById('login-error').style.display = 'block'; return;
       }
-      player = { name, docLast3: doc3 };
-      localStorage.setItem('crowdpick_player', JSON.stringify(player));
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('player-tag').textContent = player.name;
-      if (pendingPoll) { handlePollUpdate(pendingPoll); pendingPoll = null; }
-      else { document.getElementById('waiting').style.display = 'block'; }
+      pendingPlayer = { name, docLast3: doc3 };
+      const btn = document.getElementById('login-btn');
+      btn.disabled = true; btn.textContent = 'Ingresando...';
+      socket.emit('join-game', { name, docLast3: doc3 });
     }
 
     fetch('/api/config').then(r => r.json()).then(cfg => {
@@ -252,12 +290,13 @@
     });
 
     function hideAll() {
-      ['login-screen','waiting','poll-intro','poll-section','thanks','winner-announcement','vote-ranking','next-question-countdown','final-screen']
+      ['login-screen','room-full-screen','waiting','poll-intro','poll-section','thanks','winner-announcement','vote-ranking','next-question-countdown','final-screen']
         .forEach(id => document.getElementById(id).style.display = 'none');
     }
 
     function showWaiting() {
       hideAll();
+      if (isRoomFull) { document.getElementById('room-full-screen').style.display = 'block'; return; }
       if (!player) document.getElementById('login-screen').style.display = 'block';
       else document.getElementById('waiting').style.display = 'block';
     }
