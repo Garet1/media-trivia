@@ -361,23 +361,39 @@
       const ov = document.getElementById('ranking-overlay');
       const list = document.getElementById('ov-list');
       document.getElementById('ov-title').style.color = appearance.accentColor;
-      list.innerHTML = ranking.slice(0, 10).map((p, i) => {
-        const medals = ['🥇','🥈','🥉'];
-        const medal = medals[i] || `${i+1}.`;
-        const pct = Math.round((p.score / Math.max(...ranking.map(r=>r.score), 1)) * 100);
+
+      const top = ranking.slice(0, 10);
+      const maxScore = Math.max(...top.map(r => r.score), 1);
+      const medals = ['🥇','🥈','🥉'];
+
+      const renderItem = (p, i) => {
+        const medal = medals[i] || `${i + 1}.`;
+        const pct = Math.round((p.score / maxScore) * 100);
         return `
-          <div style="display:flex;align-items:center;gap:20px;background:#1a1a1a;border-radius:14px;padding:16px 24px">
-            <div style="font-size:1.8rem;width:48px;text-align:center;flex-shrink:0">${medal}</div>
-            <div style="flex:1">
-              <div style="font-size:1.3rem;font-weight:700">${p.name}</div>
-              <div style="height:8px;background:#2a2a2a;border-radius:4px;margin-top:8px;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:16px;background:#1a1a1a;border-radius:14px;padding:12px 20px">
+            <div style="font-size:1.5rem;width:42px;text-align:center;flex-shrink:0">${medal}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:1.15rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
+              <div style="height:6px;background:#2a2a2a;border-radius:4px;margin-top:6px;overflow:hidden">
                 <div style="height:100%;width:${pct}%;background:${appearance.accentColor};border-radius:4px;transition:width 0.6s ease"></div>
               </div>
             </div>
-            <div style="font-size:1.8rem;font-weight:700;color:${appearance.accentColor};min-width:60px;text-align:right">${p.score}</div>
-          </div>
-        `;
-      }).join('');
+            <div style="font-size:1.5rem;font-weight:700;color:${appearance.accentColor};min-width:50px;text-align:right">${p.score}</div>
+          </div>`;
+      };
+
+      if (top.length <= 5) {
+        list.style.cssText = 'width:100%;max-width:700px;display:flex;flex-direction:column;gap:12px';
+        list.innerHTML = top.map(renderItem).join('');
+      } else {
+        const col1 = top.slice(0, 5);
+        const col2 = top.slice(5);
+        list.style.cssText = 'width:100%;max-width:1400px;display:flex;flex-direction:row;gap:32px';
+        list.innerHTML =
+          `<div style="flex:1;display:flex;flex-direction:column;gap:12px">${col1.map(renderItem).join('')}</div>` +
+          `<div style="flex:1;display:flex;flex-direction:column;gap:12px">${col2.map(renderItem).join('')}</div>`;
+      }
+
       ov.style.display = 'flex';
     }
 
