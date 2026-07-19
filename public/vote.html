@@ -124,6 +124,10 @@
     <div class="logo-container" id="waiting-logo"><img id="waiting-logo-img" src="" alt="Logo"></div>
     <h2 id="waiting-title">🎵 Media Trivia</h2>
     <p id="waiting-subtitle">Esperando la próxima pregunta...</p>
+    <div id="vote-cd-section" style="display:none;margin-top:24px;text-align:center">
+      <div id="vote-cd-label" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;transition:color 0.4s">Próxima ronda en</div>
+      <div id="vote-cd-display" style="font-size:3rem;font-weight:700;line-height:1;transition:color 0.4s"></div>
+    </div>
   </div>
 
   <!-- INTRO PREGUNTA -->
@@ -264,6 +268,8 @@
       document.getElementById('waiting-title').style.color = appearance.accentColor;
       document.getElementById('waiting-subtitle').style.color = appearance.subtitleColor;
       document.getElementById('intro-countdown').style.color = appearance.accentColor;
+      document.getElementById('vote-cd-display').style.color = appearance.accentColor;
+      document.getElementById('vote-cd-label').style.color = appearance.subtitleColor;
       document.getElementById('thanks-title').style.color = appearance.accentColor;
       document.getElementById('thanks-sub').style.color = appearance.subtitleColor;
       document.getElementById('winner-label').style.color = appearance.subtitleColor;
@@ -299,6 +305,27 @@
       if (isRoomFull) { document.getElementById('room-full-screen').style.display = 'block'; return; }
       if (!player) document.getElementById('login-screen').style.display = 'block';
       else document.getElementById('waiting').style.display = 'block';
+    }
+
+    let voteCdTimer = null;
+    socket.on('waiting-countdown', ({ endsAt }) => {
+      if (voteCdTimer) { clearInterval(voteCdTimer); voteCdTimer = null; }
+      const section = document.getElementById('vote-cd-section');
+      if (!endsAt) { section.style.display = 'none'; return; }
+      section.style.display = 'block';
+      tickVoteCd(endsAt);
+      voteCdTimer = setInterval(() => tickVoteCd(endsAt), 1000);
+    });
+
+    function tickVoteCd(endsAt) {
+      const rem = Math.max(0, Math.round((endsAt - Date.now()) / 1000));
+      if (rem <= 0) {
+        clearInterval(voteCdTimer); voteCdTimer = null;
+        document.getElementById('vote-cd-section').style.display = 'none';
+        return;
+      }
+      const m = Math.floor(rem / 60), s = rem % 60;
+      document.getElementById('vote-cd-display').textContent = `${m}:${String(s).padStart(2, '0')}`;
     }
 
     let introCountdownInterval = null;

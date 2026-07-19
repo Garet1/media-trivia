@@ -130,6 +130,7 @@ app.post('/api/import', express.json({ limit: '2mb' }), (req, res) => {
 // ── Estado ──────────────────────────────────────────────────────────────────
 const POLL_INTRO_SECONDS = 5;
 const MAX_PLAYERS = parseInt(process.env.MAX_PLAYERS || '150', 10);
+let waitingCountdownEndsAt = null;
 const knownPlayers = new Set();   // name|docLast3 únicos en esta sesión
 const socketToPlayer = new Map(); // socketId → key
 let currentPoll = null;
@@ -349,6 +350,20 @@ io.on('connection', (socket) => {
   if (timer && timerRemaining > 0) socket.emit('timer-update', { remaining: timerRemaining, total: timerTotal });
   socket.emit('quiz-library-update', quizLibrary);
   socket.emit('queue-state', getQueueState());
+  if (waitingCountdownEndsAt && waitingCountdownEndsAt > Date.now()) {
+    socket.emit('waiting-countdown', { endsAt: waitingCountdownEndsAt });
+  }
+
+  socket.on('start-waiting-countdown', ({ seconds }) => {
+    if (!seconds || seconds <= 0) return;
+    waitingCountdownEndsAt = Date.now() + seconds * 1000;
+    io.emit('waiting-countdown', { endsAt: waitingCountdownEndsAt });
+  });
+
+  socket.on('stop-waiting-countdown', () => {
+    waitingCountdownEndsAt = null;
+    io.emit('waiting-countdown', { endsAt: null });
+  });
 
   socket.on('update-waiting', (data) => { waitingScreen = data; socket.broadcast.emit('update-waiting', data); });
   socket.on('update-appearance', (data) => { appearance = { ...appearance, ...data }; socket.broadcast.emit('appearance-update', appearance); });
@@ -396,8 +411,10 @@ io.on('connection', (socket) => {
     winnerVisible = false;
     waitingScreen = { title: '', subtitle: '' };
     displayRanking = false;
+    waitingCountdownEndsAt = null;
     io.emit('go-home');
     io.emit('hide-display-ranking');
+    io.emit('waiting-countdown', { endsAt: null });
     io.emit('timer-clear');
     io.emit('queue-advance-countdown', { seconds: 0 });
     io.emit('queue-state', getQueueState());

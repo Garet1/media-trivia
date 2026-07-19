@@ -192,6 +192,22 @@
       <label>Subtítulo</label>
       <input type="text" id="waiting-subtitle" placeholder="Ej: La votación comenzará en breve...">
       <button class="btn-outline" onclick="updateWaiting()">↺ Actualizar pantalla de espera</button>
+
+      <div style="margin-top:20px;border-top:1px solid #1e1e1e;padding-top:16px">
+        <div style="font-size:0.8rem;color:#aaa;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Cuenta regresiva</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <button class="btn-outline" style="flex:1;min-width:60px" onclick="startWaitingCd(30*60)">30 min</button>
+          <button class="btn-outline" style="flex:1;min-width:60px" onclick="startWaitingCd(20*60)">20 min</button>
+          <button class="btn-outline" style="flex:1;min-width:60px" onclick="startWaitingCd(15*60)">15 min</button>
+          <button class="btn-outline" style="flex:1;min-width:60px" onclick="startWaitingCd(10*60)">10 min</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="number" id="cd-custom-min" placeholder="Min" min="1" max="180" style="width:80px;flex-shrink:0">
+          <button class="btn-outline" style="flex:1" onclick="startWaitingCdCustom()">▶ Iniciar</button>
+        </div>
+        <div id="cd-status" style="font-size:0.82rem;color:#555;text-align:center;margin-top:10px;display:none"></div>
+        <button class="btn-outline-danger" id="btn-stop-cd" style="display:none;margin-top:6px" onclick="stopWaitingCd()">✕ Cancelar cuenta regresiva</button>
+      </div>
     </div>
   </div>
 
@@ -390,6 +406,39 @@
     function updateWaiting() {
       socket.emit('update-waiting', { title: document.getElementById('waiting-title').value, subtitle: document.getElementById('waiting-subtitle').value });
       showStatus('✅ Pantalla de espera actualizada.', true);
+    }
+
+    let cdAdminTimer = null;
+    function startWaitingCd(seconds) { socket.emit('start-waiting-countdown', { seconds }); }
+    function startWaitingCdCustom() {
+      const m = parseInt(document.getElementById('cd-custom-min').value);
+      if (!m || m <= 0) return;
+      startWaitingCd(m * 60);
+    }
+    function stopWaitingCd() { socket.emit('stop-waiting-countdown'); }
+
+    socket.on('waiting-countdown', ({ endsAt }) => {
+      if (cdAdminTimer) { clearInterval(cdAdminTimer); cdAdminTimer = null; }
+      const statusEl = document.getElementById('cd-status');
+      const stopBtn = document.getElementById('btn-stop-cd');
+      if (!endsAt) { statusEl.style.display = 'none'; stopBtn.style.display = 'none'; return; }
+      stopBtn.style.display = 'block';
+      statusEl.style.display = 'block';
+      tickAdminCd(endsAt);
+      cdAdminTimer = setInterval(() => tickAdminCd(endsAt), 1000);
+    });
+
+    function tickAdminCd(endsAt) {
+      const rem = Math.max(0, Math.round((endsAt - Date.now()) / 1000));
+      const statusEl = document.getElementById('cd-status');
+      if (rem <= 0) {
+        clearInterval(cdAdminTimer); cdAdminTimer = null;
+        statusEl.textContent = 'Finalizada';
+        document.getElementById('btn-stop-cd').style.display = 'none';
+        return;
+      }
+      const m = Math.floor(rem / 60), s = rem % 60;
+      statusEl.textContent = `⏱ ${m}:${String(s).padStart(2, '0')} restantes`;
     }
 
     // ── Quiz builder ────────────────────────────────────────────────────────
