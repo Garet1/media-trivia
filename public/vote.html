@@ -308,10 +308,20 @@
     }
 
     let voteCdTimer = null;
+    function setVoteWaitingTextVisible(visible) {
+      document.getElementById('waiting-title').style.display = visible ? '' : 'none';
+      document.getElementById('waiting-subtitle').style.display = visible ? '' : 'none';
+    }
+
     socket.on('waiting-countdown', ({ endsAt }) => {
       if (voteCdTimer) { clearInterval(voteCdTimer); voteCdTimer = null; }
       const section = document.getElementById('vote-cd-section');
-      if (!endsAt) { section.style.display = 'none'; return; }
+      if (!endsAt) {
+        section.style.display = 'none';
+        setVoteWaitingTextVisible(true);
+        return;
+      }
+      setVoteWaitingTextVisible(false);
       section.style.display = 'block';
       tickVoteCd(endsAt);
       voteCdTimer = setInterval(() => tickVoteCd(endsAt), 1000);
@@ -322,6 +332,7 @@
       if (rem <= 0) {
         clearInterval(voteCdTimer); voteCdTimer = null;
         document.getElementById('vote-cd-section').style.display = 'none';
+        setVoteWaitingTextVisible(true);
         return;
       }
       const m = Math.floor(rem / 60), s = rem % 60;

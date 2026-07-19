@@ -413,10 +413,20 @@
     socket.on('hide-display-ranking', () => { document.getElementById('ranking-overlay').style.display = 'none'; });
 
     let waitingCdTimer = null;
+    function setWaitingTextVisible(visible) {
+      document.getElementById('waiting-title').style.display = visible ? '' : 'none';
+      document.getElementById('waiting-subtitle').style.display = visible ? '' : 'none';
+    }
+
     socket.on('waiting-countdown', ({ endsAt }) => {
       if (waitingCdTimer) { clearInterval(waitingCdTimer); waitingCdTimer = null; }
       const section = document.getElementById('waiting-cd-section');
-      if (!endsAt) { section.style.display = 'none'; return; }
+      if (!endsAt) {
+        section.style.display = 'none';
+        setWaitingTextVisible(true);
+        return;
+      }
+      setWaitingTextVisible(false);
       section.style.display = 'block';
       tickWaitingCd(endsAt);
       waitingCdTimer = setInterval(() => tickWaitingCd(endsAt), 1000);
@@ -427,6 +437,7 @@
       if (rem <= 0) {
         clearInterval(waitingCdTimer); waitingCdTimer = null;
         document.getElementById('waiting-cd-section').style.display = 'none';
+        setWaitingTextVisible(true);
         return;
       }
       const m = Math.floor(rem / 60), s = rem % 60;
