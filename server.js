@@ -235,8 +235,6 @@ function doEndPoll() {
   emitRanking(); // ranking antes que show-winner para que clientes lo tengan
   io.emit('show-winner', { winnerId, poll: currentPoll, votes });
   io.emit('timer-clear');
-  displayRanking = true;
-  io.emit('show-display-ranking', getRanking());
   if (queuePlaying) scheduleQueueAdvance();
 }
 
