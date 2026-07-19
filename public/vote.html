@@ -390,7 +390,10 @@
           <div class="vote-rank-row${isMe ? ' me' : ''}">
             <div class="vote-rank-medal">${medals[i] || (i + 1) + '.'}</div>
             <div class="vote-rank-name">${escHtml(p.name)}${isMe ? '<span class="vote-rank-me-tag">← Vos</span>' : ''}</div>
-            <div class="vote-rank-pts">${p.score} pts</div>
+            <div class="vote-rank-pts" style="text-align:right">
+              <div>${p.score} pts</div>
+              ${p.timeBank ? `<div style="font-size:0.65rem;color:#555">⏱ ${p.timeBank}s</div>` : ''}
+            </div>
           </div>`;
       }).join('');
     }
@@ -415,7 +418,10 @@
           <div class="vote-rank-row${isMe ? ' me' : ''}">
             <div class="vote-rank-medal">${medals[i] || (i+1) + '.'}</div>
             <div class="vote-rank-name">${escHtml(p.name)}${isMe ? '<span class="vote-rank-me-tag">← Vos</span>' : ''}</div>
-            <div class="vote-rank-pts">${p.score} pts</div>
+            <div class="vote-rank-pts" style="text-align:right">
+              <div>${p.score} pts</div>
+              ${p.timeBank ? `<div style="font-size:0.65rem;color:#555">⏱ ${p.timeBank}s</div>` : ''}
+            </div>
           </div>`;
       }).join('');
       document.getElementById('final-screen').style.display = 'block';

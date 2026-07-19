@@ -317,7 +317,10 @@ function getWinnerId() {
   return Object.entries(votes).reduce((a, b) => b[1] > a[1] ? b : a, ['', -1])[0];
 }
 function getRanking() {
-  return Object.values(players).sort((a, b) => b.score - a.score);
+  return Object.values(players).sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return (b.timeBank || 0) - (a.timeBank || 0);
+  });
 }
 function emitRanking() {
   const ranking = getRanking();
@@ -367,9 +370,12 @@ io.on('connection', (socket) => {
     votedInPoll[key] = optionId;
     votes[optionId]++;
     io.emit('votes-update', votes);
-    if (!players[key]) players[key] = { name, docLast3, score: 0 };
+    if (!players[key]) players[key] = { name, docLast3, score: 0, timeBank: 0 };
     if (currentPoll.correctId && optionId === currentPoll.correctId) {
       players[key].score++;
+      if (currentPoll.timerSeconds && timerRemaining > 0) {
+        players[key].timeBank = (players[key].timeBank || 0) + timerRemaining;
+      }
       savePlayers();
       emitRanking();
     }
