@@ -140,6 +140,21 @@
     <div class="options" id="options-container"></div>
   </div>
 
+  <!-- CÓMO SE JUEGA OVERLAY -->
+  <div id="htp-overlay" style="display:none;position:fixed;inset:0;background:rgba(10,10,10,0.97);z-index:201;flex-direction:column;align-items:center;justify-content:center;padding:60px 100px">
+    <div style="max-width:960px;width:100%">
+      <div id="htp-title" style="font-size:2.2rem;font-weight:700;letter-spacing:2px;margin-bottom:52px;text-align:center">MEDIA TRIVIA · CÓMO SE JUEGA</div>
+      <div style="display:flex;flex-direction:column;gap:28px">
+        <div style="font-size:1.55rem">📲 Escaneá el QR y elegí tu apodo</div>
+        <div style="font-size:1.55rem">🎬 Ronda nueva cada 30 min — cada una tiene su ganador</div>
+        <div style="font-size:1.55rem">✅ Gana quien más preguntas acierta</div>
+        <div style="font-size:1.55rem">⏱️ ¿Empate? Gana quien respondió más rápido</div>
+        <div style="font-size:1.55rem">🏆 Premio por ronda + gran premio de la noche al que más acumule en toda la jornada</div>
+        <div style="font-size:1.55rem">📍 Para llevarte el premio tenés que estar presente en el club</div>
+      </div>
+    </div>
+  </div>
+
   <!-- RANKING OVERLAY -->
   <div id="ranking-overlay" style="display:none;position:fixed;inset:0;background:rgba(10,10,10,0.96);z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px 80px">
     <div style="font-size:2.4rem;font-weight:700;margin-bottom:40px;letter-spacing:1px" id="ov-title">🏆 Ranking</div>
@@ -203,6 +218,7 @@
       document.getElementById('intro-countdown').style.color = appearance.accentColor;
       document.getElementById('waiting-cd-display').style.color = appearance.accentColor;
       document.getElementById('waiting-cd-label').style.color = appearance.subtitleColor;
+      document.getElementById('htp-title').style.color = appearance.accentColor;
 
       // Logo
       if (appearance.logoUrl) {
@@ -410,6 +426,8 @@
       ov.style.display = 'flex';
     }
 
+    socket.on('show-how-to-play', () => { document.getElementById('htp-overlay').style.display = 'flex'; });
+    socket.on('hide-how-to-play', () => { document.getElementById('htp-overlay').style.display = 'none'; });
     socket.on('show-display-ranking', (ranking) => { showRankingOverlay(ranking, '🏆 Ranking'); });
     socket.on('show-night-ranking', (ranking) => { showRankingOverlay(ranking, '🌙 Ranking — Toda la noche'); });
     socket.on('hide-display-ranking', () => { document.getElementById('ranking-overlay').style.display = 'none'; });

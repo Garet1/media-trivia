@@ -136,6 +136,7 @@ app.post('/api/import', express.json({ limit: '2mb' }), (req, res) => {
 const POLL_INTRO_SECONDS = 5;
 const MAX_PLAYERS = parseInt(process.env.MAX_PLAYERS || '150', 10);
 let waitingCountdownEndsAt = null;
+let howToPlayVisible = false;
 const knownPlayers = new Set();   // name|docLast3 únicos en esta sesión
 const socketToPlayer = new Map(); // socketId → key
 let currentPoll = null;
@@ -371,6 +372,12 @@ io.on('connection', (socket) => {
   if (waitingCountdownEndsAt && waitingCountdownEndsAt > Date.now()) {
     socket.emit('waiting-countdown', { endsAt: waitingCountdownEndsAt });
   }
+  if (howToPlayVisible) socket.emit('show-how-to-play');
+
+  socket.on('toggle-how-to-play', () => {
+    howToPlayVisible = !howToPlayVisible;
+    io.emit(howToPlayVisible ? 'show-how-to-play' : 'hide-how-to-play');
+  });
 
   socket.on('start-waiting-countdown', ({ seconds }) => {
     if (!seconds || seconds <= 0) return;
@@ -435,6 +442,8 @@ io.on('connection', (socket) => {
     displayRanking = false;
     displayNightRanking = false;
     waitingCountdownEndsAt = null;
+    howToPlayVisible = false;
+    io.emit('hide-how-to-play');
     io.emit('go-home');
     io.emit('hide-display-ranking');
     io.emit('waiting-countdown', { endsAt: null });

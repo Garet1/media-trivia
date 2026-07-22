@@ -128,6 +128,23 @@
       <div id="vote-cd-label" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;transition:color 0.4s">Próxima ronda en</div>
       <div id="vote-cd-display" style="font-size:3rem;font-weight:700;line-height:1;transition:color 0.4s"></div>
     </div>
+    <button onclick="document.getElementById('htp-modal').style.display='flex'" style="margin-top:28px;background:transparent;border:1px solid #2a2a2a;color:#444;padding:8px 22px;border-radius:20px;font-size:0.78rem;cursor:pointer">📖 ¿Cómo se juega?</button>
+  </div>
+
+  <!-- MODAL CÓMO SE JUEGA (local, sin servidor) -->
+  <div id="htp-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:300;flex-direction:column;align-items:center;justify-content:center;padding:20px">
+    <div style="background:#1a1a1a;border-radius:16px;padding:24px 20px;max-width:380px;width:100%">
+      <div id="htp-modal-title" style="font-size:1rem;font-weight:700;margin-bottom:18px;letter-spacing:1px">CÓMO SE JUEGA</div>
+      <div style="display:flex;flex-direction:column;gap:14px;font-size:0.88rem;line-height:1.4">
+        <div>📲 Escaneá el QR y elegí tu apodo</div>
+        <div>🎬 Ronda nueva cada 30 min — cada una tiene su ganador</div>
+        <div>✅ Gana quien más preguntas acierta</div>
+        <div>⏱️ ¿Empate? Gana quien respondió más rápido</div>
+        <div>🏆 Premio por ronda + gran premio de la noche al que más acumule en toda la jornada</div>
+        <div>📍 Para llevarte el premio tenés que estar presente en el club</div>
+      </div>
+      <button onclick="document.getElementById('htp-modal').style.display='none'" style="width:100%;margin-top:22px;background:#2a2a2a;border:none;color:#fff;padding:12px;border-radius:10px;font-size:0.9rem;cursor:pointer">Cerrar</button>
+    </div>
   </div>
 
   <!-- INTRO PREGUNTA -->
@@ -270,6 +287,7 @@
       document.getElementById('intro-countdown').style.color = appearance.accentColor;
       document.getElementById('vote-cd-display').style.color = appearance.accentColor;
       document.getElementById('vote-cd-label').style.color = appearance.subtitleColor;
+      document.getElementById('htp-modal-title').style.color = appearance.accentColor;
       document.getElementById('thanks-title').style.color = appearance.accentColor;
       document.getElementById('thanks-sub').style.color = appearance.subtitleColor;
       document.getElementById('winner-label').style.color = appearance.subtitleColor;

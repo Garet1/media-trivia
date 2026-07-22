@@ -192,6 +192,7 @@
       <label>Subtítulo</label>
       <input type="text" id="waiting-subtitle" placeholder="Ej: La votación comenzará en breve...">
       <button class="btn-outline" onclick="updateWaiting()">↺ Actualizar pantalla de espera</button>
+      <button class="btn-outline" id="btn-htp" onclick="toggleHowToPlay()" style="margin-top:8px">📖 Mostrar "Cómo se juega" en display</button>
 
       <div style="margin-top:20px;border-top:1px solid #1e1e1e;padding-top:16px">
         <div style="font-size:0.8rem;color:#aaa;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Cuenta regresiva</div>
@@ -346,6 +347,7 @@
     let quizQuestionCount = 0;
     let displayRankingShown = false;
     let displayNightShown = false;
+    let htpShown = false;
     let activePhase = 'idle'; // 'active' | 'winner' | 'idle'
     let countdownInterval = null;
 
@@ -420,6 +422,15 @@
       document.getElementById('logo-url-input').value = ''; showLogoPreview('');
       showStatus('↺ Apariencia restaurada.', false);
     }
+    function toggleHowToPlay() {
+      htpShown = !htpShown;
+      socket.emit('toggle-how-to-play');
+      const btn = document.getElementById('btn-htp');
+      btn.textContent = htpShown ? '📖 Ocultar "Cómo se juega"' : '📖 Mostrar "Cómo se juega" en display';
+      btn.style.borderColor = htpShown ? PRIMARY_COLOR : '';
+      btn.style.color = htpShown ? PRIMARY_COLOR : '';
+    }
+
     function updateWaiting() {
       socket.emit('update-waiting', { title: document.getElementById('waiting-title').value, subtitle: document.getElementById('waiting-subtitle').value });
       showStatus('✅ Pantalla de espera actualizada.', true);
@@ -707,7 +718,10 @@
       activePhase = 'idle';
       displayRankingShown = false;
       displayNightShown = false;
+      htpShown = false;
       document.getElementById('active-controls').style.display = 'none';
+      const bh = document.getElementById('btn-htp');
+      bh.textContent = '📖 Mostrar "Cómo se juega" en display'; bh.style.borderColor = ''; bh.style.color = '';
       document.getElementById('finished-controls').style.display = 'none';
       const br = document.getElementById('btn-display-ranking');
       br.textContent = '📺 Mostrar ranking en display'; br.style.borderColor = ''; br.style.color = '';
