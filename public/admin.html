@@ -299,6 +299,22 @@
     </div>
   </div>
 
+  <!-- RANKING DE LA NOCHE -->
+  <div class="collapsible" id="collapse-night">
+    <div class="collapsible-header" onclick="toggleCollapse('night')">
+      <span class="collapsible-title">🌙 Ranking de la noche</span>
+      <span class="collapsible-arrow">▼</span>
+    </div>
+    <div class="collapsible-body">
+      <p style="color:#555;font-size:0.8rem;margin-bottom:12px">Acumula puntos de todas las rondas. No se reinicia entre rondas — solo manualmente al final de la noche.</p>
+      <div id="night-ranking-list" style="min-height:60px">
+        <p style="color:#555;text-align:center;padding:20px 0;font-size:0.9rem">Sin participantes aún</p>
+      </div>
+      <button class="btn-outline" id="btn-display-night" onclick="toggleNightRanking()" style="margin-top:12px">📺 Mostrar ranking de la noche en display</button>
+      <button class="btn-outline-danger" onclick="resetNightRanking()" style="margin-top:8px">🗑️ Reiniciar ranking de la noche</button>
+    </div>
+  </div>
+
   <!-- BACKUP DE SESIÓN -->
   <div class="collapsible" id="collapse-backup">
     <div class="collapsible-header" onclick="toggleCollapse('backup')">
@@ -329,6 +345,7 @@
     let editingQuizId = null;
     let quizQuestionCount = 0;
     let displayRankingShown = false;
+    let displayNightShown = false;
     let activePhase = 'idle'; // 'active' | 'winner' | 'idle'
     let countdownInterval = null;
 
@@ -688,8 +705,13 @@
 
     socket.on('go-home', () => {
       activePhase = 'idle';
+      displayRankingShown = false;
+      displayNightShown = false;
       document.getElementById('active-controls').style.display = 'none';
       document.getElementById('finished-controls').style.display = 'none';
+      const br = document.getElementById('btn-display-ranking');
+      br.textContent = '📺 Mostrar ranking en display'; br.style.borderColor = ''; br.style.color = '';
+      syncNightBtn();
     });
 
     // Countdown automático entre preguntas
@@ -728,11 +750,13 @@
 
     function toggleDisplayRanking() {
       displayRankingShown = !displayRankingShown;
+      if (displayRankingShown) displayNightShown = false;
       socket.emit('toggle-display-ranking');
       const btn = document.getElementById('btn-display-ranking');
       btn.textContent = displayRankingShown ? '📺 Ocultar ranking del display' : '📺 Mostrar ranking en display';
       btn.style.borderColor = displayRankingShown ? PRIMARY_COLOR : '';
       btn.style.color = displayRankingShown ? PRIMARY_COLOR : '';
+      syncNightBtn();
     }
 
     function resetRanking() {
@@ -740,6 +764,50 @@
       socket.emit('reset-ranking');
       showStatus('🗑️ Ranking reiniciado.', false);
     }
+
+    function toggleNightRanking() {
+      displayNightShown = !displayNightShown;
+      if (displayNightShown) displayRankingShown = false;
+      socket.emit('toggle-night-ranking');
+      syncNightBtn();
+      const btn = document.getElementById('btn-display-ranking');
+      btn.textContent = '📺 Mostrar ranking en display';
+      btn.style.borderColor = ''; btn.style.color = '';
+    }
+
+    function syncNightBtn() {
+      const btn = document.getElementById('btn-display-night');
+      btn.textContent = displayNightShown ? '📺 Ocultar ranking de la noche' : '📺 Mostrar ranking de la noche en display';
+      btn.style.borderColor = displayNightShown ? PRIMARY_COLOR : '';
+      btn.style.color = displayNightShown ? PRIMARY_COLOR : '';
+    }
+
+    function resetNightRanking() {
+      if (!confirm('¿Reiniciar el ranking de la noche? Se pierden todos los puntos acumulados.')) return;
+      socket.emit('reset-night-ranking');
+      showStatus('🗑️ Ranking de la noche reiniciado.', false);
+    }
+
+    socket.on('night-ranking-update', (ranking) => {
+      const list = document.getElementById('night-ranking-list');
+      if (!ranking.length) {
+        list.innerHTML = '<p style="color:#555;text-align:center;padding:20px 0;font-size:0.9rem">Sin participantes aún</p>';
+        return;
+      }
+      list.innerHTML = ranking.map((p, i) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 2px;border-bottom:1px solid #1a1a1a">
+          <div>
+            <span style="color:#444;margin-right:8px;font-size:0.85rem">${i + 1}.</span>
+            <span style="font-weight:600">${escHtml(p.name)}</span>
+            <span style="color:#333;font-size:0.75rem;margin-left:6px">···${p.docLast3}</span>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:700;color:var(--accent,#6C63FF);font-size:1.1rem">${p.score} pts</div>
+            ${p.timeBank ? `<div style="font-size:0.7rem;color:#444">⏱ ${p.timeBank}s</div>` : ''}
+          </div>
+        </div>
+      `).join('');
+    });
 
     // ── Utilidades ──────────────────────────────────────────────────────────
     async function exportSession() {

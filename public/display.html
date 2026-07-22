@@ -366,9 +366,10 @@
       if (!resultsHidden) updateBars(votes);
     }
 
-    function showRankingOverlay(ranking) {
+    function showRankingOverlay(ranking, label = '🏆 Ranking') {
       const ov = document.getElementById('ranking-overlay');
       const list = document.getElementById('ov-list');
+      document.getElementById('ov-title').textContent = label;
       document.getElementById('ov-title').style.color = appearance.accentColor;
 
       const top = ranking.slice(0, 10);
@@ -409,7 +410,8 @@
       ov.style.display = 'flex';
     }
 
-    socket.on('show-display-ranking', (ranking) => { showRankingOverlay(ranking); });
+    socket.on('show-display-ranking', (ranking) => { showRankingOverlay(ranking, '🏆 Ranking'); });
+    socket.on('show-night-ranking', (ranking) => { showRankingOverlay(ranking, '🌙 Ranking — Toda la noche'); });
     socket.on('hide-display-ranking', () => { document.getElementById('ranking-overlay').style.display = 'none'; });
 
     let waitingCdTimer = null;

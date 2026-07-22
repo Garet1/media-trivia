@@ -106,23 +106,28 @@ app.get('/api/qr', async (req, res) => {
 
 app.get('/api/export', (req, res) => {
   if (req.query.pwd !== ADMIN_PASSWORD) return res.status(401).json({ error: 'No autorizado' });
-  const backup = { exportedAt: new Date().toISOString(), players, quizLibrary };
+  const backup = { exportedAt: new Date().toISOString(), players, nightPlayers, quizLibrary };
   res.setHeader('Content-Disposition', `attachment; filename="media-trivia-backup-${Date.now()}.json"`);
   res.json(backup);
 });
 
 app.post('/api/import', express.json({ limit: '2mb' }), (req, res) => {
   if (req.query.pwd !== ADMIN_PASSWORD) return res.status(401).json({ error: 'No autorizado' });
-  const { players: importedPlayers, quizLibrary: importedQuizzes } = req.body || {};
+  const { players: importedPlayers, nightPlayers: importedNight, quizLibrary: importedQuizzes } = req.body || {};
   if (importedPlayers && typeof importedPlayers === 'object') {
     players = importedPlayers;
     savePlayers();
+  }
+  if (importedNight && typeof importedNight === 'object') {
+    nightPlayers = importedNight;
+    saveNightPlayers();
   }
   if (Array.isArray(importedQuizzes)) {
     quizLibrary = importedQuizzes;
     saveQuizzes();
   }
   emitRanking();
+  emitNightRanking();
   io.emit('quiz-library-update', quizLibrary);
   res.json({ ok: true });
 });
@@ -157,12 +162,16 @@ function saveJSON(file, data) {
 
 const PLAYERS_FILE = path.join(__dirname, 'data', 'players.json');
 const QUIZZES_FILE = path.join(__dirname, 'data', 'quizzes.json');
+const NIGHT_FILE = path.join(__dirname, 'data', 'night-players.json');
 function savePlayers() { saveJSON(PLAYERS_FILE, players); }
 function saveQuizzes() { saveJSON(QUIZZES_FILE, quizLibrary); }
+function saveNightPlayers() { saveJSON(NIGHT_FILE, nightPlayers); }
 
 let players = loadJSON(PLAYERS_FILE, {});
+let nightPlayers = loadJSON(NIGHT_FILE, {});
 let votedInPoll = {};
 let displayRanking = false;
+let displayNightRanking = false;
 let appearance = {
   bgColor: '#111111', textColor: '#ffffff',
   accentColor: PRIMARY_COLOR, subtitleColor: '#aaaaaa',
@@ -193,6 +202,7 @@ function startIntro(introTitle, introLabel, pollData) {
   if (introTimer) { clearTimeout(introTimer); introTimer = null; }
   currentPoll = null;
   if (displayRanking) { displayRanking = false; io.emit('hide-display-ranking'); }
+  if (displayNightRanking) { displayNightRanking = false; io.emit('hide-display-ranking'); }
   pollIntro = { title: introTitle, label: introLabel, seconds: POLL_INTRO_SECONDS };
   io.emit('poll-intro', pollIntro);
   introTimer = setTimeout(() => {
@@ -315,16 +325,24 @@ function getQueueState() {
 function getWinnerId() {
   return Object.entries(votes).reduce((a, b) => b[1] > a[1] ? b : a, ['', -1])[0];
 }
-function getRanking() {
-  return Object.values(players).sort((a, b) => {
+function sortByScoreAndBank(arr) {
+  return arr.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
     return (b.timeBank || 0) - (a.timeBank || 0);
   });
 }
+function getRanking() { return sortByScoreAndBank(Object.values(players)); }
+function getNightRanking() { return sortByScoreAndBank(Object.values(nightPlayers)); }
+
 function emitRanking() {
   const ranking = getRanking();
   io.emit('ranking-update', ranking);
   if (displayRanking) io.emit('show-display-ranking', ranking);
+}
+function emitNightRanking() {
+  const ranking = getNightRanking();
+  io.emit('night-ranking-update', ranking);
+  if (displayNightRanking) io.emit('show-night-ranking', ranking);
 }
 
 // ── Socket.IO ────────────────────────────────────────────────────────────────
@@ -343,7 +361,9 @@ io.on('connection', (socket) => {
     }
   }
   socket.emit('ranking-update', getRanking());
+  socket.emit('night-ranking-update', getNightRanking());
   if (displayRanking) socket.emit('show-display-ranking', getRanking());
+  else if (displayNightRanking) socket.emit('show-night-ranking', getNightRanking());
   socket.emit('results-visibility', { hidden: resultsHidden, votes });
   if (timer && timerRemaining > 0) socket.emit('timer-update', { remaining: timerRemaining, total: timerTotal });
   socket.emit('quiz-library-update', quizLibrary);
@@ -384,13 +404,17 @@ io.on('connection', (socket) => {
     votes[optionId]++;
     io.emit('votes-update', votes);
     if (!players[key]) players[key] = { name, docLast3, score: 0, timeBank: 0 };
+    if (!nightPlayers[key]) nightPlayers[key] = { name, docLast3, score: 0, timeBank: 0 };
     if (currentPoll.correctId && optionId === currentPoll.correctId) {
+      const bonus = (currentPoll.timerSeconds && timerRemaining > 0) ? timerRemaining : 0;
       players[key].score++;
-      if (currentPoll.timerSeconds && timerRemaining > 0) {
-        players[key].timeBank = (players[key].timeBank || 0) + timerRemaining;
-      }
+      players[key].timeBank = (players[key].timeBank || 0) + bonus;
+      nightPlayers[key].score++;
+      nightPlayers[key].timeBank = (nightPlayers[key].timeBank || 0) + bonus;
       savePlayers();
+      saveNightPlayers();
       emitRanking();
+      emitNightRanking();
     }
   });
 
@@ -409,6 +433,7 @@ io.on('connection', (socket) => {
     winnerVisible = false;
     waitingScreen = { title: '', subtitle: '' };
     displayRanking = false;
+    displayNightRanking = false;
     waitingCountdownEndsAt = null;
     io.emit('go-home');
     io.emit('hide-display-ranking');
@@ -419,10 +444,19 @@ io.on('connection', (socket) => {
   });
 
   socket.on('reset-ranking', () => { players = {}; savePlayers(); emitRanking(); });
+  socket.on('reset-night-ranking', () => { nightPlayers = {}; saveNightPlayers(); emitNightRanking(); });
 
   socket.on('toggle-display-ranking', () => {
+    if (displayNightRanking) { displayNightRanking = false; }
     displayRanking = !displayRanking;
     if (displayRanking) io.emit('show-display-ranking', getRanking());
+    else io.emit('hide-display-ranking');
+  });
+
+  socket.on('toggle-night-ranking', () => {
+    if (displayRanking) { displayRanking = false; }
+    displayNightRanking = !displayNightRanking;
+    if (displayNightRanking) io.emit('show-night-ranking', getNightRanking());
     else io.emit('hide-display-ranking');
   });
 
