@@ -524,11 +524,13 @@ io.on('connection', (socket) => {
     if (!name || !docLast3) return;
     const key = `${name}|${docLast3}`;
     if (knownPlayers.has(key)) {
+      // Jugador conocido que vuelve — siempre entra, no ocupa lugar nuevo
       socketToPlayer.set(socket.id, key);
       socket.emit('join-ok');
       return;
     }
-    if (knownPlayers.size >= MAX_PLAYERS) {
+    // Jugador nuevo — verificar conexiones activas
+    if (socketToPlayer.size >= MAX_PLAYERS) {
       socket.emit('room-full', { max: MAX_PLAYERS });
       return;
     }
