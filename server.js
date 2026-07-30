@@ -134,7 +134,7 @@ app.post('/api/import', express.json({ limit: '2mb' }), (req, res) => {
 
 // ── Estado ──────────────────────────────────────────────────────────────────
 const POLL_INTRO_SECONDS = 5;
-const MAX_PLAYERS = parseInt(process.env.MAX_PLAYERS || '150', 10);
+const MAX_PLAYERS = parseInt(process.env.MAX_PLAYERS || '200', 10);
 let waitingCountdownEndsAt = null;
 let howToPlayVisible = false;
 const knownPlayers = new Set();   // name|docLast3 únicos en esta sesión
@@ -454,6 +454,7 @@ io.on('connection', (socket) => {
 
   socket.on('reset-ranking', () => { players = {}; savePlayers(); emitRanking(); });
   socket.on('reset-night-ranking', () => { nightPlayers = {}; saveNightPlayers(); emitNightRanking(); });
+  socket.on('reset-known-players', () => { knownPlayers.clear(); socketToPlayer.clear(); });
 
   socket.on('toggle-display-ranking', () => {
     if (displayNightRanking) { displayNightRanking = false; }

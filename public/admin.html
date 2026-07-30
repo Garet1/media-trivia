@@ -284,6 +284,7 @@
 
   <!-- RESET DE EMERGENCIA (siempre visible) -->
   <button id="btn-emergency-reset" onclick="resetAll()" style="width:100%;background:transparent;border:1px solid #222;color:#444;padding:10px;border-radius:10px;font-size:0.82rem;cursor:pointer;margin-bottom:10px;transition:all 0.2s" onmouseover="this.style.borderColor='#c0392b';this.style.color='#c0392b'" onmouseout="this.style.borderColor='#222';this.style.color='#444'">🔄 Forzar vuelta a pantalla de espera</button>
+  <button onclick="resetKnownPlayers()" style="width:100%;background:transparent;border:1px solid #222;color:#444;padding:10px;border-radius:10px;font-size:0.82rem;cursor:pointer;margin-bottom:10px;transition:all 0.2s" onmouseover="this.style.borderColor='#e67e22';this.style.color='#e67e22'" onmouseout="this.style.borderColor='#222';this.style.color='#444'">👥 Reiniciar cupo de jugadores (inicio de noche)</button>
 
   <!-- RANKING -->
   <div class="collapsible open" id="collapse-ranking">
@@ -689,6 +690,11 @@
     function nextQuestion() { socket.emit('next-question'); }
     function endPoll() { socket.emit('end-poll'); }
     function resetAll() { socket.emit('reset-display'); }
+    function resetKnownPlayers() {
+      if (!confirm('¿Reiniciar el cupo? Los jugadores conectados podrán seguir jugando, pero quien entre nuevo ocupa un lugar del nuevo cupo de 200.')) return;
+      socket.emit('reset-known-players');
+      showStatus('👥 Cupo reiniciado.', true);
+    }
 
     // Fases durante cola
     socket.on('poll-update', () => {
