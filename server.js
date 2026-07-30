@@ -536,6 +536,24 @@ io.on('connection', (socket) => {
     socket.emit('join-ok');
   });
 
+  socket.on('rename-player', ({ oldName, docLast3, newName }) => {
+    if (!oldName || !docLast3 || !newName) return;
+    newName = newName.trim().slice(0, 30);
+    if (!newName) return;
+    const oldKey = `${oldName}|${docLast3}`;
+    const newKey = `${newName}|${docLast3}`;
+    if (oldKey === newKey) { socket.emit('rename-ok', { newName, docLast3 }); return; }
+    if (knownPlayers.has(newKey)) { socket.emit('rename-error', { message: 'Ese nombre ya está en uso' }); return; }
+    if (players[oldKey]) { players[newKey] = { ...players[oldKey], name: newName }; delete players[oldKey]; savePlayers(); }
+    if (nightPlayers[oldKey]) { nightPlayers[newKey] = { ...nightPlayers[oldKey], name: newName }; delete nightPlayers[oldKey]; saveNightPlayers(); }
+    knownPlayers.delete(oldKey);
+    knownPlayers.add(newKey);
+    socketToPlayer.set(socket.id, newKey);
+    socket.emit('rename-ok', { newName, docLast3 });
+    emitRanking();
+    emitNightRanking();
+  });
+
   socket.on('disconnect', () => {
     socketToPlayer.delete(socket.id);
     console.log('Cliente desconectado:', socket.id);

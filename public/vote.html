@@ -96,6 +96,15 @@
     #room-full-screen .rf-icon { font-size: 3rem; margin-bottom: 16px; }
     #room-full-screen h2 { font-size: 1.5rem; margin-bottom: 12px; }
     #room-full-screen p { font-size: 0.88rem; color: #aaa; margin-top: 8px; line-height: 1.5; }
+    /* Rename */
+    #rename-form { display:none; flex-direction:column; gap:8px; margin-top:10px; }
+    /* Rankings modal */
+    #ranking-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:400; flex-direction:column; align-items:center; justify-content:flex-end; }
+    #ranking-modal-inner { background:#1a1a1a; border-radius:20px 20px 0 0; padding:20px 16px 30px; width:100%; max-width:480px; max-height:80vh; overflow-y:auto; }
+    .rm-tab { flex:1; padding:10px; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer; border:1px solid #333; background:transparent; color:#aaa; }
+    .rm-tab.active { background:var(--accent,#6C63FF); color:#000; border-color:transparent; }
+    /* Floating button */
+    #floating-btn { display:none; position:fixed; bottom:50px; left:50%; transform:translateX(-50%); background:#1a1a1a; border:1px solid #2a2a2a; color:#aaa; padding:9px 20px; border-radius:20px; font-size:0.78rem; cursor:pointer; z-index:10; white-space:nowrap; }
   </style>
 </head>
 <body>
@@ -129,6 +138,20 @@
       <div id="vote-cd-display" style="font-size:3rem;font-weight:700;line-height:1;transition:color 0.4s"></div>
     </div>
     <button onclick="document.getElementById('htp-modal').style.display='flex'" style="margin-top:28px;background:transparent;border:1px solid #2a2a2a;color:#444;padding:8px 22px;border-radius:20px;font-size:0.78rem;cursor:pointer">📖 ¿Cómo se juega?</button>
+    <div id="player-edit-section" style="display:none;margin-top:20px">
+      <div style="font-size:0.75rem;color:#555;text-align:center">
+        Jugando como <strong id="player-name-display"></strong>
+        <button onclick="showRenameForm()" style="background:transparent;border:none;color:#444;cursor:pointer;font-size:0.85rem;margin-left:4px;vertical-align:middle">✏️</button>
+      </div>
+      <div id="rename-form">
+        <input class="login-input" type="text" id="rename-input" placeholder="Nuevo nombre" onkeydown="if(event.key==='Enter')submitRename()">
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="login-btn" onclick="submitRename()" style="margin-top:0;padding:10px;flex:1">Guardar</button>
+          <button onclick="hideRenameForm()" style="flex:1;background:#2a2a2a;border:none;color:#aaa;padding:10px;border-radius:10px;font-size:0.9rem;cursor:pointer">Cancelar</button>
+        </div>
+        <div id="rename-error" style="display:none;color:#c0392b;font-size:0.8rem;text-align:center;margin-top:6px"></div>
+      </div>
+    </div>
   </div>
 
   <!-- MODAL CÓMO SE JUEGA (local, sin servidor) -->
@@ -144,6 +167,18 @@
         <div>📍 Para llevarte el premio tenés que estar presente en el club</div>
       </div>
       <button onclick="document.getElementById('htp-modal').style.display='none'" style="width:100%;margin-top:22px;background:#2a2a2a;border:none;color:#fff;padding:12px;border-radius:10px;font-size:0.9rem;cursor:pointer">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- MODAL RANKINGS -->
+  <div id="ranking-modal">
+    <div id="ranking-modal-inner">
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button class="rm-tab active" id="tab-round" onclick="showRankingTab('round')">🏆 Ronda</button>
+        <button class="rm-tab" id="tab-night" onclick="showRankingTab('night')">🌙 Noche</button>
+      </div>
+      <div id="ranking-modal-list"></div>
+      <button onclick="document.getElementById('ranking-modal').style.display='none'" style="width:100%;margin-top:16px;background:#2a2a2a;border:none;color:#fff;padding:12px;border-radius:10px;font-size:0.9rem;cursor:pointer">Cerrar</button>
     </div>
   </div>
 
@@ -196,6 +231,7 @@
   <div class="player-tag" id="player-tag"></div>
   <div class="powered">Powered by Media Trivia</div>
 
+  <button id="floating-btn" onclick="openRankingModal()">📊 Ver rankings</button>
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
@@ -205,6 +241,8 @@
     let currentPoll = null;
     let pendingPoll = null;
     let lastRanking = [];
+    let lastNightRanking = [];
+    let activeRankingTab = 'round';
     let countdownInterval = null;
     let isRoomFull = false;
     let pendingPlayer = null;
@@ -221,6 +259,7 @@
       localStorage.setItem('crowdpick_player', JSON.stringify(player));
       document.getElementById('player-tag').textContent = player.name;
       document.getElementById('login-screen').style.display = 'none';
+      showPlayerUI();
       if (pendingPoll) { handlePollUpdate(pendingPoll); pendingPoll = null; }
       else document.getElementById('waiting').style.display = 'block';
     });
@@ -252,6 +291,7 @@
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('waiting').style.display = 'block';
       document.getElementById('player-tag').textContent = player.name;
+      showPlayerUI();
     }
 
     function doLogin() {
@@ -360,6 +400,7 @@
     let introCountdownInterval = null;
     socket.on('poll-intro', ({ title, seconds, label }) => {
       if (!player) return;
+      document.getElementById('ranking-modal').style.display = 'none';
       hideAll();
       document.getElementById('poll-intro').style.display = 'block';
       document.getElementById('intro-label').textContent = label || 'Siguiente pregunta';
@@ -412,6 +453,10 @@
 
     socket.on('ranking-update', (ranking) => {
       lastRanking = ranking;
+    });
+
+    socket.on('night-ranking-update', (ranking) => {
+      lastNightRanking = ranking;
     });
 
     socket.on('show-winner', ({ winnerId, poll }) => {
@@ -521,6 +566,75 @@
       socket.emit('vote', { optionId, name: player.name, docLast3: player.docLast3 });
       hideAll();
       document.getElementById('thanks').style.display = 'block';
+    }
+
+    // ── Cambio de nombre ──────────────────────────────────────────────────────
+    function showPlayerUI() {
+      document.getElementById('player-name-display').textContent = player.name;
+      document.getElementById('player-edit-section').style.display = 'block';
+      document.getElementById('floating-btn').style.display = 'block';
+    }
+    function showRenameForm() {
+      document.getElementById('rename-input').value = player.name;
+      document.getElementById('rename-error').style.display = 'none';
+      document.getElementById('rename-form').style.display = 'flex';
+    }
+    function hideRenameForm() {
+      document.getElementById('rename-form').style.display = 'none';
+    }
+    function submitRename() {
+      const newName = document.getElementById('rename-input').value.trim();
+      if (!newName) return;
+      socket.emit('rename-player', { oldName: player.name, docLast3: player.docLast3, newName });
+    }
+    socket.on('rename-ok', ({ newName, docLast3 }) => {
+      player = { name: newName, docLast3 };
+      localStorage.setItem('crowdpick_player', JSON.stringify(player));
+      document.getElementById('player-tag').textContent = newName;
+      document.getElementById('player-name-display').textContent = newName;
+      hideRenameForm();
+    });
+    socket.on('rename-error', ({ message }) => {
+      const el = document.getElementById('rename-error');
+      el.textContent = message;
+      el.style.display = 'block';
+    });
+
+    // ── Rankings modal ────────────────────────────────────────────────────────
+    function openRankingModal(tab) {
+      activeRankingTab = tab || 'round';
+      document.getElementById('ranking-modal').style.display = 'flex';
+      syncRankingTabs();
+      renderRankingModal();
+    }
+    function showRankingTab(tab) {
+      activeRankingTab = tab;
+      syncRankingTabs();
+      renderRankingModal();
+    }
+    function syncRankingTabs() {
+      document.getElementById('tab-round').classList.toggle('active', activeRankingTab === 'round');
+      document.getElementById('tab-night').classList.toggle('active', activeRankingTab === 'night');
+    }
+    function renderRankingModal() {
+      const data = activeRankingTab === 'round' ? lastRanking : lastNightRanking;
+      const list = document.getElementById('ranking-modal-list');
+      if (!data || !data.length) {
+        list.innerHTML = '<p style="text-align:center;color:#555;padding:20px 0">Sin participantes aún</p>';
+        return;
+      }
+      const medals = ['🥇','🥈','🥉'];
+      list.innerHTML = data.slice(0, 20).map((p, i) => {
+        const isMe = player && p.name === player.name && p.docLast3 === player.docLast3;
+        return `<div class="vote-rank-row${isMe ? ' me' : ''}">
+          <div class="vote-rank-medal">${medals[i] || (i + 1) + '.'}</div>
+          <div class="vote-rank-name">${escHtml(p.name)}${isMe ? '<span class="vote-rank-me-tag">← Vos</span>' : ''}</div>
+          <div class="vote-rank-pts" style="text-align:right">
+            <div>${p.score} pts</div>
+            ${p.timeBank ? `<div style="font-size:0.65rem;color:#555">⏱ ${p.timeBank}s</div>` : ''}
+          </div>
+        </div>`;
+      }).join('');
     }
   </script>
 </body>

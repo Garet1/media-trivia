@@ -419,8 +419,8 @@
         const col2 = top.slice(5);
         list.style.cssText = 'width:100%;max-width:1400px;display:flex;flex-direction:row;gap:32px';
         list.innerHTML =
-          `<div style="flex:1;display:flex;flex-direction:column;gap:12px">${col1.map(renderItem).join('')}</div>` +
-          `<div style="flex:1;display:flex;flex-direction:column;gap:12px">${col2.map(renderItem).join('')}</div>`;
+          `<div style="flex:1;display:flex;flex-direction:column;gap:12px">${col1.map((p, i) => renderItem(p, i)).join('')}</div>` +
+          `<div style="flex:1;display:flex;flex-direction:column;gap:12px">${col2.map((p, i) => renderItem(p, i + 5)).join('')}</div>`;
       }
 
       ov.style.display = 'flex';
