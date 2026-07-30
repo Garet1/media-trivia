@@ -543,7 +543,6 @@ io.on('connection', (socket) => {
     const oldKey = `${oldName}|${docLast3}`;
     const newKey = `${newName}|${docLast3}`;
     if (oldKey === newKey) { socket.emit('rename-ok', { newName, docLast3 }); return; }
-    if (knownPlayers.has(newKey)) { socket.emit('rename-error', { message: 'Ese nombre ya está en uso' }); return; }
     if (players[oldKey]) { players[newKey] = { ...players[oldKey], name: newName }; delete players[oldKey]; savePlayers(); }
     if (nightPlayers[oldKey]) { nightPlayers[newKey] = { ...nightPlayers[oldKey], name: newName }; delete nightPlayers[oldKey]; saveNightPlayers(); }
     knownPlayers.delete(oldKey);

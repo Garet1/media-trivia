@@ -149,7 +149,6 @@
           <button class="login-btn" onclick="submitRename()" style="margin-top:0;padding:10px;flex:1">Guardar</button>
           <button onclick="hideRenameForm()" style="flex:1;background:#2a2a2a;border:none;color:#aaa;padding:10px;border-radius:10px;font-size:0.9rem;cursor:pointer">Cancelar</button>
         </div>
-        <div id="rename-error" style="display:none;color:#c0392b;font-size:0.8rem;text-align:center;margin-top:6px"></div>
       </div>
     </div>
   </div>
@@ -576,7 +575,6 @@
     }
     function showRenameForm() {
       document.getElementById('rename-input').value = player.name;
-      document.getElementById('rename-error').style.display = 'none';
       document.getElementById('rename-form').style.display = 'flex';
     }
     function hideRenameForm() {
@@ -594,12 +592,6 @@
       document.getElementById('player-name-display').textContent = newName;
       hideRenameForm();
     });
-    socket.on('rename-error', ({ message }) => {
-      const el = document.getElementById('rename-error');
-      el.textContent = message;
-      el.style.display = 'block';
-    });
-
     // ── Rankings modal ────────────────────────────────────────────────────────
     function openRankingModal(tab) {
       activeRankingTab = tab || 'round';
