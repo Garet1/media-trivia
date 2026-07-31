@@ -243,7 +243,8 @@ function doEndPoll() {
   timerRemaining = 0;
   winnerVisible = true;
   const winnerId = currentPoll ? (currentPoll.correctId || getWinnerId()) : '';
-  emitRanking(); // ranking antes que show-winner para que clientes lo tengan
+  emitRanking();
+  emitNightRanking();
   io.emit('show-winner', { winnerId, poll: currentPoll, votes });
   io.emit('timer-clear');
   if (queuePlaying) scheduleQueueAdvance();
