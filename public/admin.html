@@ -4,125 +4,137 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Media Trivia — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg:      #0c0c0c;
+      --surface: #111;
+      --text:    #F4E4C5;
+      --sub:     #777;
+      --border:  #2a2a2a;
+      --accent:  #D94793;
+      --bw:      2px;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      background: #111; color: #fff;
-      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg); color: var(--text);
+      font-family: 'Inter', sans-serif;
       padding: 30px 20px;
       max-width: 600px;
       margin: 0 auto;
     }
-    h1 { font-size: 1.6rem; margin-bottom: 6px; }
-    p.sub { color: #555; font-size: 0.85rem; margin-bottom: 24px; }
-    label { display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 6px; margin-top: 16px; }
+    h1 { font-family: 'Anton', sans-serif; font-size: 2rem; margin-bottom: 4px; letter-spacing: 1px; color: var(--accent); }
+    p.sub { color: var(--sub); font-size: 0.85rem; margin-bottom: 24px; margin-top: 4px; }
+    label { display: block; font-size: 0.8rem; color: var(--sub); margin-bottom: 6px; margin-top: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
     input[type="text"], input[type="password"], input[type="url"], input[type="number"], select {
-      width: 100%; background: #222; border: 1px solid #333;
-      color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 0.95rem;
+      width: 100%; background: var(--surface); border: var(--bw) solid var(--border);
+      color: var(--text); padding: 10px 14px; border-radius: 0; font-size: 0.95rem;
+      font-family: 'Inter', sans-serif;
     }
-    input:focus, select:focus { outline: none; border-color: var(--accent, #6C63FF); }
+    input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 2px 2px 0 var(--accent); }
     select { cursor: pointer; }
-    select option { background: #222; }
+    select option { background: var(--surface); }
 
     /* Collapsible */
-    .collapsible { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+    .collapsible { background: var(--surface); border: var(--bw) solid var(--border); border-radius: 0; margin-bottom: 8px; overflow: hidden; }
     .collapsible-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; cursor: pointer; user-select: none; }
-    .collapsible-header:hover { background: #222; }
-    .collapsible-title { font-size: 0.9rem; font-weight: 600; }
-    .collapsible-arrow { font-size: 0.8rem; color: #555; transition: transform 0.25s; }
+    .collapsible-header:hover { background: #1a1a1a; }
+    .collapsible-title { font-family: 'Anton', sans-serif; font-size: 0.95rem; letter-spacing: 0.5px; }
+    .collapsible-arrow { font-size: 0.8rem; color: var(--sub); transition: transform 0.25s; }
     .collapsible.open .collapsible-arrow { transform: rotate(180deg); }
-    .collapsible-body { display: none; padding: 0 18px 18px; border-top: 1px solid #2a2a2a; }
+    .collapsible-body { display: none; padding: 0 18px 18px; border-top: var(--bw) solid var(--border); }
     .collapsible.open .collapsible-body { display: block; }
 
     /* Colores */
     .color-row { display: flex; align-items: center; gap: 10px; }
-    .color-row input[type="color"] { width: 44px; height: 44px; padding: 2px; border-radius: 8px; border: 1px solid #333; background: #222; cursor: pointer; flex-shrink: 0; }
+    .color-row input[type="color"] { width: 44px; height: 44px; padding: 2px; border-radius: 0; border: var(--bw) solid var(--border); background: var(--surface); cursor: pointer; flex-shrink: 0; }
     .color-row input[type="text"] { flex: 1; }
 
     /* Logo */
     .logo-tabs { display: flex; gap: 8px; margin-top: 16px; margin-bottom: 12px; }
-    .logo-tab { background: #1a1a1a; border: 1px solid #333; color: #aaa; padding: 7px 16px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; }
-    .logo-tab.active { border-color: var(--accent, #6C63FF); color: var(--accent, #6C63FF); }
+    .logo-tab { background: var(--surface); border: var(--bw) solid var(--border); color: var(--sub); padding: 7px 16px; border-radius: 0; font-size: 0.85rem; cursor: pointer; }
+    .logo-tab.active { border-color: var(--accent); color: var(--accent); }
     .logo-panel { display: none; }
     .logo-panel.active { display: block; }
-    .logo-preview { margin-top: 12px; background: #111; border: 1px solid #2a2a2a; border-radius: 10px; padding: 16px; text-align: center; min-height: 80px; display: flex; align-items: center; justify-content: center; }
+    .logo-preview { margin-top: 12px; background: var(--bg); border: var(--bw) solid var(--border); padding: 16px; text-align: center; min-height: 80px; display: flex; align-items: center; justify-content: center; }
     .logo-preview img { max-height: 60px; max-width: 100%; object-fit: contain; }
-    .logo-preview span { color: #444; font-size: 0.85rem; }
-    .file-upload-btn { background: #222; border: 1px dashed #444; color: #aaa; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 0.9rem; text-align: center; display: block; margin-top: 8px; }
-    .file-upload-btn:hover { border-color: var(--accent, #6C63FF); color: var(--accent, #6C63FF); }
-    .font-preview { margin-top: 8px; padding: 10px 14px; background: #111; border-radius: 8px; font-size: 1.1rem; color: #fff; text-align: center; }
+    .logo-preview span { color: var(--sub); font-size: 0.85rem; }
+    .file-upload-btn { background: var(--surface); border: var(--bw) dashed var(--border); color: var(--sub); padding: 12px; border-radius: 0; cursor: pointer; width: 100%; font-size: 0.9rem; text-align: center; display: block; margin-top: 8px; }
+    .file-upload-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .font-preview { margin-top: 8px; padding: 10px 14px; background: var(--bg); border: var(--bw) solid var(--border); font-size: 1.1rem; color: var(--text); text-align: center; }
 
     /* Botones generales */
-    .btn { margin-top: 10px; padding: 13px 20px; border-radius: 10px; border: none; font-size: 0.95rem; font-weight: 600; cursor: pointer; width: 100%; }
+    .btn { margin-top: 10px; padding: 13px 20px; border-radius: 0; border: none; font-family: 'Anton', sans-serif; font-size: 1rem; letter-spacing: 0.5px; cursor: pointer; width: 100%; }
     .btn-primary { color: #000; }
-    .btn-red { background: #c0392b; color: #fff; }
+    .btn-red { background: #c0392b; color: #fff; border: var(--bw) solid #c0392b; }
     .btn-red:hover { background: #a93226; }
-    .btn-gray { background: #333; color: #fff; }
-    .btn-gray:hover { background: #444; }
-    .btn-outline { background: transparent; border: 1px solid #444; color: #aaa; padding: 10px 20px; border-radius: 10px; font-size: 0.9rem; font-weight: 500; cursor: pointer; width: 100%; margin-top: 10px; }
-    .btn-outline:hover { border-color: var(--accent, #6C63FF); color: var(--accent, #6C63FF); }
-    .btn-outline-danger { background: transparent; border: 1px solid #3a2a2a; color: #c0392b; padding: 10px 20px; border-radius: 10px; font-size: 0.85rem; cursor: pointer; width: 100%; margin-top: 8px; }
-    .btn-outline-danger:hover { background: #3a1a1a; }
-    .btn-remove { background: transparent; border: 1px solid #3a2a2a; color: #c0392b; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
-    .btn-remove:hover { background: #3a1a1a; }
+    .btn-gray { background: #2a2a2a; color: var(--text); border: var(--bw) solid #3a3a3a; }
+    .btn-gray:hover { background: #333; }
+    .btn-outline { background: transparent; border: var(--bw) solid var(--border); color: var(--sub); padding: 10px 20px; border-radius: 0; font-size: 0.88rem; font-weight: 500; cursor: pointer; width: 100%; margin-top: 10px; transition: border-color 0.15s, color 0.15s; }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-outline-danger { background: transparent; border: var(--bw) solid #3a2020; color: #c0392b; padding: 10px 20px; border-radius: 0; font-size: 0.85rem; cursor: pointer; width: 100%; margin-top: 8px; }
+    .btn-outline-danger:hover { background: #200f0f; }
+    .btn-remove { background: transparent; border: var(--bw) solid #3a2020; color: #c0392b; padding: 4px 10px; border-radius: 0; font-size: 0.75rem; cursor: pointer; }
+    .btn-remove:hover { background: #200f0f; }
 
     /* Quiz builder */
-    .q-block { background: #151515; border: 1px solid #2a2a2a; border-radius: 10px; padding: 14px; margin-top: 10px; }
+    .q-block { background: #0a0a0a; border: var(--bw) solid var(--border); padding: 14px; margin-top: 10px; }
     .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .q-label { font-size: 0.8rem; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
-    .q-title { width: 100%; background: #222; border: 1px solid #333; color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 0.95rem; margin-bottom: 10px; }
-    .q-title:focus { outline: none; border-color: var(--accent, #6C63FF); }
+    .q-label { font-family: 'Anton', sans-serif; font-size: 0.8rem; color: var(--sub); text-transform: uppercase; letter-spacing: 1px; }
+    .q-title { width: 100%; background: var(--surface); border: var(--bw) solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 0; font-size: 0.95rem; margin-bottom: 10px; font-family: 'Inter', sans-serif; }
+    .q-title:focus { outline: none; border-color: var(--accent); }
     .q-options { display: flex; flex-direction: column; gap: 8px; }
     .q-opt-row { display: flex; align-items: center; gap: 8px; }
-    .q-opt-row input[type="radio"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent, #6C63FF); flex-shrink: 0; }
-    .q-opt-name { flex: 1; background: #222; border: 1px solid #2a2a2a; color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; }
-    .q-opt-name:focus { outline: none; border-color: var(--accent, #6C63FF); }
+    .q-opt-row input[type="radio"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); flex-shrink: 0; }
+    .q-opt-name { flex: 1; background: var(--surface); border: var(--bw) solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 0; font-size: 0.9rem; font-family: 'Inter', sans-serif; }
+    .q-opt-name:focus { outline: none; border-color: var(--accent); }
     .btn-rm-sm { background: transparent; border: none; color: #333; cursor: pointer; font-size: 1rem; padding: 2px 6px; flex-shrink: 0; line-height: 1; }
     .btn-rm-sm:hover { color: #c0392b; }
-    .btn-add-opt { background: transparent; border: 1px dashed #2a2a2a; color: #444; padding: 7px 12px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 8px; font-size: 0.85rem; }
-    .btn-add-opt:hover { border-color: var(--accent, #6C63FF); color: var(--accent, #6C63FF); }
-    #btn-add-question { background: transparent; border: 1px dashed #333; color: #555; padding: 10px; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 12px; font-size: 0.9rem; }
-    #btn-add-question:hover { border-color: var(--accent, #6C63FF); color: var(--accent, #6C63FF); }
+    .btn-add-opt { background: transparent; border: var(--bw) dashed var(--border); color: var(--sub); padding: 7px 12px; border-radius: 0; cursor: pointer; width: 100%; margin-top: 8px; font-size: 0.85rem; }
+    .btn-add-opt:hover { border-color: var(--accent); color: var(--accent); }
+    #btn-add-question { background: transparent; border: var(--bw) dashed var(--border); color: var(--sub); padding: 10px; border-radius: 0; cursor: pointer; width: 100%; margin-top: 12px; font-size: 0.9rem; }
+    #btn-add-question:hover { border-color: var(--accent); color: var(--accent); }
 
-    /* Quiz settings row */
+    /* Quiz settings */
     .quiz-settings { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
-    .quiz-check-row { display: flex; align-items: center; gap: 8px; background: #1a1a1a; border: 1px solid #222; border-radius: 8px; padding: 10px 12px; cursor: pointer; font-size: 0.85rem; color: #aaa; flex: 1; min-width: 140px; }
-    .quiz-check-row input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--accent, #6C63FF); cursor: pointer; flex-shrink: 0; }
+    .quiz-check-row { display: flex; align-items: center; gap: 8px; background: var(--surface); border: var(--bw) solid var(--border); padding: 10px 12px; cursor: pointer; font-size: 0.85rem; color: var(--sub); flex: 1; min-width: 140px; }
+    .quiz-check-row input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
     .timer-inline { display: none; align-items: center; gap: 8px; margin-top: 8px; }
     .timer-inline input { width: 80px; flex-shrink: 0; }
-    .timer-inline span { color: #555; font-size: 0.85rem; }
+    .timer-inline span { color: var(--sub); font-size: 0.85rem; }
 
     /* Biblioteca */
-    .lib-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; margin-top: 8px; gap: 10px; }
+    .lib-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--surface); border: var(--bw) solid var(--border); margin-top: 8px; gap: 10px; }
     .lib-info strong { font-weight: 600; font-size: 0.9rem; }
-    .lib-info span { color: #555; font-size: 0.8rem; display: block; margin-top: 2px; }
+    .lib-info span { color: var(--sub); font-size: 0.8rem; display: block; margin-top: 2px; }
     .lib-actions { display: flex; gap: 6px; flex-shrink: 0; }
-    .btn-queue { background: transparent; border: 1px solid #444; color: #aaa; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
-    .btn-queue:hover { border-color: var(--accent, #6C63FF); color: var(--accent, #6C63FF); }
+    .btn-queue { background: transparent; border: var(--bw) solid var(--border); color: var(--sub); padding: 5px 10px; border-radius: 0; font-size: 0.8rem; cursor: pointer; }
+    .btn-queue:hover { border-color: var(--accent); color: var(--accent); }
 
     /* Cola */
-    .queue-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; margin-top: 8px; }
-    .queue-item.current { border-color: var(--accent, #6C63FF); background: rgba(108,99,255,0.06); }
+    .queue-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--surface); border: var(--bw) solid var(--border); margin-top: 8px; }
+    .queue-item.current { border-color: var(--accent); background: rgba(217,71,147,0.06); }
     .queue-info { font-size: 0.9rem; }
-    .queue-info .q-num { color: #444; margin-right: 8px; font-size: 0.85rem; }
-    .queue-info .q-sub { color: #555; font-size: 0.8rem; margin-top: 2px; }
+    .queue-info .q-num { color: var(--sub); margin-right: 8px; font-size: 0.85rem; }
+    .queue-info .q-sub { color: var(--sub); font-size: 0.8rem; margin-top: 2px; }
 
     /* Control activo */
-    #active-controls { display: none; background: #0e0e1e; border: 1px solid var(--accent, #6C63FF); border-radius: 12px; padding: 16px 18px; margin-bottom: 10px; }
-    #active-label { font-size: 0.9rem; font-weight: 600; color: var(--accent, #6C63FF); margin-bottom: 12px; }
-    #countdown-text { font-size: 0.85rem; color: #555; margin-bottom: 10px; display: none; }
+    #active-controls { display: none; background: #0e0005; border: var(--bw) solid var(--accent); padding: 16px 18px; margin-bottom: 8px; }
+    #active-label { font-family: 'Anton', sans-serif; font-size: 1rem; letter-spacing: 0.5px; color: var(--accent); margin-bottom: 12px; }
+    #countdown-text { font-size: 0.85rem; color: var(--sub); margin-bottom: 10px; display: none; }
 
-    /* Ranking */
-    .status { margin-top: 16px; padding: 14px; border-radius: 10px; font-size: 0.9rem; display: none; border-left: 4px solid; }
+    /* Ranking / status */
+    .status { margin-top: 16px; padding: 14px; font-size: 0.9rem; display: none; border-left: 4px solid; }
     .status.active { display: block; }
-    .divider { border: none; border-top: 1px solid #1e1e1e; margin: 10px 0; }
-    .powered { text-align: center; font-size: 0.75rem; color: #333; margin-top: 40px; padding-bottom: 10px; }
-    .powered span { color: #555; }
+    .divider { border: none; border-top: var(--bw) solid var(--border); margin: 10px 0; }
+    .powered { text-align: center; font-size: 0.75rem; color: #2a2a2a; margin-top: 40px; padding-bottom: 10px; }
+    .powered span { color: #444; }
   </style>
 </head>
 <body>
-  <h1>🎛️ Panel Admin</h1>
-  <p class="sub" id="page-sub">Cargando...</p>
+  <h1>MEDIA TRIVIA</h1>
+  <p class="sub" id="page-sub">Panel de control · Cargando...</p>
 
   <!-- APARIENCIA -->
   <div class="collapsible" id="collapse-appearance">
