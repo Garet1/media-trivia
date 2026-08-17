@@ -4,120 +4,325 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Media Trivia — Votá</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* ── Design tokens ─────────────────────────────────────────────────────── */
+    :root {
+      --bg:        #F4E4C5;
+      --surface:   #fff;
+      --text:      #000;
+      --text-sub:  #555;
+      --border:    #000;
+      --accent:    #D94793;
+      --shadow:    5px 5px 0 #000;
+      --shadow-sm: 3px 3px 0 #000;
+      --bw:        3px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg:        #0c0c0c;
+        --surface:   #111;
+        --text:      #F4E4C5;
+        --text-sub:  #888;
+        --border:    #F4E4C5;
+        --shadow:    5px 5px 0 #F4E4C5;
+        --shadow-sm: 3px 3px 0 #F4E4C5;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg:        #0c0c0c;
+      --surface:   #111;
+      --text:      #F4E4C5;
+      --text-sub:  #888;
+      --border:    #F4E4C5;
+      --shadow:    5px 5px 0 #F4E4C5;
+      --shadow-sm: 3px 3px 0 #F4E4C5;
+    }
+
+    /* ── Base ──────────────────────────────────────────────────────────────── */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      background: #111; color: #fff;
+      background: var(--bg);
+      color: var(--text);
       font-family: 'Inter', sans-serif;
-      min-height: 100vh; display: flex; flex-direction: column;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      padding: 20px; transition: background 0.4s, color 0.4s;
+      padding: 20px;
+      transition: background 0.3s, color 0.3s;
     }
+    h1, h2 { font-family: 'Anton', sans-serif; letter-spacing: 0.5px; }
+
+    /* ── Logo ──────────────────────────────────────────────────────────────── */
     .logo-container { margin-bottom: 20px; display: none; }
     .logo-container img { max-height: 70px; max-width: 200px; object-fit: contain; }
-    h1 { font-size: 1.4rem; margin-bottom: 8px; text-align: center; }
-    p.subtitle { font-size: 0.9rem; margin-bottom: 30px; text-align: center; transition: color 0.4s; }
-    .options { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; }
-    .option-btn {
-      background: #222; border: 2px solid #333; color: #fff;
-      padding: 18px 20px; border-radius: 12px; font-size: 1rem;
-      cursor: pointer; text-align: left; transition: all 0.2s;
-    }
-    .option-title { font-weight: 600; }
-    #thanks { display: none; text-align: center; }
-    #thanks h2 { font-size: 1.6rem; margin-bottom: 10px; }
-    #thanks p { margin-top: 8px; transition: color 0.4s; }
-    #winner-announcement {
-      display: none; margin-top: 30px; border-radius: 16px;
-      padding: 24px 20px; text-align: center;
-      width: 100%; max-width: 400px; border: 2px solid;
-    }
-    #winner-announcement .label { font-size: 0.95rem; margin-bottom: 8px; transition: color 0.4s; }
-    #winner-announcement .name { font-size: 1.8rem; font-weight: 700; }
-    #winner-announcement .trophy { font-size: 2.5rem; margin-bottom: 10px; }
-    #waiting { text-align: center; }
-    #waiting h2 { font-size: 1.4rem; }
-    #waiting p { margin-top: 10px; font-size: 0.85rem; transition: color 0.4s; }
-    #poll-intro { display: none; text-align: center; }
-    #poll-intro .intro-label { font-size: 0.8rem; color: #aaa; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
-    #poll-intro h2 { font-size: 1.3rem; max-width: 380px; }
-    #poll-intro .intro-countdown { font-size: 3rem; font-weight: 700; margin-top: 20px; transition: color 0.4s; }
 
-    /* Login */
+    /* ── Login ─────────────────────────────────────────────────────────────── */
     #login-screen { width: 100%; max-width: 340px; text-align: center; }
-    #login-screen h2 { font-size: 1.5rem; margin-bottom: 6px; }
-    #login-screen .login-sub { font-size: 0.85rem; color: #555; margin-bottom: 28px; }
+    #login-screen h2 { font-size: 2.2rem; margin-bottom: 4px; }
+    #login-screen .login-sub { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 28px; margin-top: 6px; }
     .login-input {
-      width: 100%; background: #222; border: 1px solid #333; color: #fff;
-      padding: 14px 16px; border-radius: 10px; font-size: 1rem;
-      margin-top: 12px; text-align: center;
+      width: 100%;
+      background: var(--surface);
+      border: var(--bw) solid var(--border);
+      color: var(--text);
+      padding: 14px 16px;
+      border-radius: 0;
+      font-size: 1rem;
+      margin-top: 12px;
+      text-align: center;
+      font-family: 'Inter', sans-serif;
+      transition: box-shadow 0.15s;
     }
-    .login-input:focus { outline: none; border-color: var(--accent, #6C63FF); }
+    .login-input:focus { outline: none; box-shadow: var(--shadow-sm); }
+    .login-input::placeholder { color: var(--text-sub); }
     .login-btn {
-      width: 100%; background: var(--accent, #6C63FF); color: #000;
-      border: none; padding: 14px; border-radius: 10px;
-      font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 16px;
+      width: 100%;
+      background: var(--text);
+      color: var(--bg);
+      border: var(--bw) solid var(--border);
+      padding: 14px;
+      border-radius: 0;
+      font-family: 'Anton', sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+      cursor: pointer;
+      margin-top: 16px;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.1s, transform 0.1s;
     }
-    .login-btn:active { opacity: 0.85; }
+    .login-btn:active { box-shadow: none; transform: translate(3px, 3px); }
     .login-error { color: #c0392b; font-size: 0.85rem; margin-top: 10px; display: none; }
 
-    /* Ranking post-resultado */
+    /* ── Room full ─────────────────────────────────────────────────────────── */
+    #room-full-screen { display: none; text-align: center; padding: 20px; }
+    #room-full-screen .rf-icon { font-size: 3rem; margin-bottom: 16px; }
+    #room-full-screen h2 { font-size: 2rem; margin-bottom: 12px; }
+    #room-full-screen p { font-size: 0.88rem; color: var(--text-sub); margin-top: 8px; line-height: 1.5; }
+
+    /* ── Waiting ───────────────────────────────────────────────────────────── */
+    #waiting { text-align: center; }
+    #waiting h2 { font-size: 2rem; color: var(--accent); }
+    #waiting p { margin-top: 10px; font-size: 0.85rem; color: var(--text-sub); }
+
+    /* ── Poll intro ────────────────────────────────────────────────────────── */
+    #poll-intro { display: none; text-align: center; }
+    #poll-intro .intro-label {
+      font-size: 0.72rem; color: var(--text-sub);
+      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;
+    }
+    #poll-intro h2 { font-size: 1.6rem; max-width: 380px; }
+    #poll-intro .intro-countdown {
+      font-family: 'Anton', sans-serif;
+      font-size: 5rem; margin-top: 16px; color: var(--accent);
+    }
+
+    /* ── Poll ──────────────────────────────────────────────────────────────── */
+    h1#poll-title { font-size: 1.5rem; margin-bottom: 8px; text-align: center; }
+    p.subtitle { font-size: 0.85rem; margin-bottom: 20px; text-align: center; color: var(--text-sub); }
+    .options { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
+    .option-btn {
+      background: var(--surface);
+      border: var(--bw) solid var(--border);
+      color: var(--text);
+      padding: 18px 20px;
+      border-radius: 0;
+      font-size: 1rem;
+      cursor: pointer;
+      text-align: left;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.1s, transform 0.1s;
+      font-family: 'Inter', sans-serif;
+    }
+    .option-btn:active { box-shadow: none; transform: translate(3px, 3px); }
+    .option-title { font-weight: 600; }
+
+    /* ── Thanks ────────────────────────────────────────────────────────────── */
+    #thanks { display: none; text-align: center; }
+    #thanks h2 { font-size: 1.8rem; margin-bottom: 10px; color: var(--accent); }
+    #thanks p { margin-top: 8px; color: var(--text-sub); }
+
+    /* ── Winner announcement ───────────────────────────────────────────────── */
+    #winner-announcement {
+      display: none; margin-top: 30px;
+      border: var(--bw) solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 24px 20px; text-align: center;
+      width: 100%; max-width: 400px;
+      background: var(--surface);
+    }
+    #winner-announcement .label { font-size: 0.85rem; margin-bottom: 8px; color: var(--text-sub); }
+    #winner-announcement .name { font-family: 'Anton', sans-serif; font-size: 2rem; color: var(--accent); }
+    #winner-announcement .trophy { font-size: 2.5rem; margin-bottom: 10px; }
+
+    /* ── Vote ranking ──────────────────────────────────────────────────────── */
     #vote-ranking { display: none; width: 100%; max-width: 400px; margin-top: 20px; }
     .vote-ranking-title {
-      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px;
-      color: #444; text-align: center; margin-bottom: 12px;
+      font-family: 'Anton', sans-serif;
+      font-size: 0.8rem; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--text-sub);
+      text-align: center; margin-bottom: 12px;
     }
     .vote-rank-row {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 14px; border-radius: 10px; margin-bottom: 8px;
-      background: #181818; border: 1px solid #222;
+      padding: 10px 14px; margin-bottom: 8px;
+      background: var(--surface);
+      border: var(--bw) solid var(--border);
+      box-shadow: var(--shadow-sm);
     }
     .vote-rank-row.me {
-      background: rgba(108,99,255,0.1);
-      border-color: var(--accent, #6C63FF);
+      background: var(--accent);
+      color: #fff;
     }
+    .vote-rank-row.me .vote-rank-pts { color: #fff; }
     .vote-rank-medal { width: 28px; flex-shrink: 0; font-size: 1rem; }
     .vote-rank-name { flex: 1; font-size: 0.9rem; font-weight: 500; }
-    .vote-rank-me-tag { font-size: 0.7rem; color: var(--accent, #6C63FF); margin-left: 6px; }
-    .vote-rank-pts { font-weight: 700; color: var(--accent, #6C63FF); font-size: 0.95rem; }
+    .vote-rank-me-tag { font-size: 0.7rem; margin-left: 6px; opacity: 0.85; }
+    .vote-rank-pts { font-family: 'Anton', sans-serif; font-size: 1rem; color: var(--accent); text-align: right; }
 
-    /* Countdown siguiente pregunta */
+    /* ── Final screen ──────────────────────────────────────────────────────── */
+    #final-screen { display: none; text-align: center; width: 100%; max-width: 400px; }
+
+    /* ── Next question countdown ───────────────────────────────────────────── */
     #next-question-countdown {
       display: none; margin-top: 16px;
-      font-size: 0.8rem; color: #444; text-align: center;
+      font-size: 0.8rem; color: var(--text-sub); text-align: center;
     }
 
-    .player-tag { position: fixed; top: 14px; right: 16px; font-size: 0.72rem; color: #444; }
-    .powered { position: fixed; bottom: 14px; right: 20px; font-size: 0.7rem; color: #2a2a2a; }
-    #vote-timer { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); display: none; text-align: center; }
-    #vote-timer .secs { font-size: 1.8rem; font-weight: 700; line-height: 1; }
-    #vote-timer .label { font-size: 0.7rem; color: #555; }
-    #room-full-screen { display: none; text-align: center; padding: 20px; }
-    #room-full-screen .rf-icon { font-size: 3rem; margin-bottom: 16px; }
-    #room-full-screen h2 { font-size: 1.5rem; margin-bottom: 12px; }
-    #room-full-screen p { font-size: 0.88rem; color: #aaa; margin-top: 8px; line-height: 1.5; }
-    /* Rename */
-    #rename-form { display:none; flex-direction:column; gap:8px; margin-top:10px; }
-    /* Rankings modal */
-    #ranking-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:400; flex-direction:column; align-items:center; justify-content:flex-end; }
-    #ranking-modal-inner { background:#1a1a1a; border-radius:20px 20px 0 0; padding:20px 16px 30px; width:100%; max-width:480px; max-height:80vh; overflow-y:auto; }
-    .rm-tab { flex:1; padding:10px; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer; border:1px solid #333; background:transparent; color:#aaa; }
-    .rm-tab.active { background:var(--accent,#6C63FF); color:#000; border-color:transparent; }
-    /* Floating button */
-    #floating-btn { display:none; position:fixed; bottom:50px; left:50%; transform:translateX(-50%); background:#1a1a1a; border:1px solid #2a2a2a; color:#aaa; padding:9px 20px; border-radius:20px; font-size:0.78rem; cursor:pointer; z-index:10; white-space:nowrap; }
+    /* ── Fixed elements ────────────────────────────────────────────────────── */
+    .player-tag { position: fixed; top: 14px; right: 16px; font-size: 0.72rem; color: var(--text-sub); }
+    .powered { position: fixed; bottom: 14px; right: 20px; font-size: 0.7rem; color: var(--text-sub); opacity: 0.35; }
+    #vote-timer {
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      display: none; text-align: center;
+      background: var(--text); color: var(--bg);
+      border: var(--bw) solid var(--border);
+      box-shadow: var(--shadow-sm);
+      padding: 6px 14px;
+    }
+    #vote-timer .secs { font-family: 'Anton', sans-serif; font-size: 1.8rem; line-height: 1; }
+    #vote-timer .label { font-size: 0.7rem; opacity: 0.7; }
+
+    /* ── Rename ────────────────────────────────────────────────────────────── */
+    #rename-form { display: none; flex-direction: column; gap: 8px; margin-top: 10px; }
+
+    /* ── Rankings modal ────────────────────────────────────────────────────── */
+    #ranking-modal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 400; flex-direction: column;
+      align-items: center; justify-content: flex-end;
+    }
+    #ranking-modal-inner {
+      background: var(--surface);
+      border: var(--bw) solid var(--border);
+      border-bottom: none;
+      box-shadow: 0 -5px 0 var(--border);
+      padding: 20px 16px 30px;
+      width: 100%; max-width: 480px;
+      max-height: 80vh; overflow-y: auto;
+    }
+    .rm-tab {
+      flex: 1; padding: 10px; border-radius: 0;
+      font-family: 'Anton', sans-serif;
+      font-size: 0.9rem; letter-spacing: 0.5px;
+      cursor: pointer;
+      border: var(--bw) solid var(--border);
+      background: var(--bg); color: var(--text);
+      transition: box-shadow 0.1s, transform 0.1s;
+    }
+    .rm-tab.active {
+      background: var(--accent); color: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ── HTP modal ─────────────────────────────────────────────────────────── */
+    #htp-modal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 300; flex-direction: column;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    #htp-inner {
+      background: var(--surface);
+      border: var(--bw) solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 24px 20px; max-width: 380px; width: 100%;
+    }
+    #htp-modal-title {
+      font-family: 'Anton', sans-serif;
+      font-size: 1.2rem; letter-spacing: 1px;
+      color: var(--accent);
+      margin-bottom: 18px;
+    }
+    .htp-rules { display: flex; flex-direction: column; gap: 14px; font-size: 0.88rem; line-height: 1.4; }
+    .btn-secondary {
+      width: 100%; margin-top: 20px;
+      background: var(--text); color: var(--bg);
+      border: var(--bw) solid var(--border);
+      padding: 12px; border-radius: 0;
+      font-family: 'Anton', sans-serif;
+      font-size: 0.95rem; letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.1s, transform 0.1s;
+    }
+    .btn-secondary:active { box-shadow: none; transform: translate(3px, 3px); }
+
+    /* ── Floating button ───────────────────────────────────────────────────── */
+    #floating-btn {
+      display: none; position: fixed;
+      bottom: 50px; left: 50%; transform: translateX(-50%);
+      background: var(--text); color: var(--bg);
+      border: var(--bw) solid var(--border);
+      box-shadow: var(--shadow-sm);
+      padding: 9px 20px; border-radius: 0;
+      font-family: 'Anton', sans-serif;
+      font-size: 0.85rem; letter-spacing: 0.5px;
+      cursor: pointer; z-index: 10; white-space: nowrap;
+      transition: box-shadow 0.1s, transform 0.1s;
+    }
+    #floating-btn:active { box-shadow: none; transform: translateX(-50%) translate(3px, 3px); }
+
+    /* ── Player edit section ───────────────────────────────────────────────── */
+    #player-edit-section { display: none; margin-top: 20px; }
+    #player-greeting { font-size: 0.75rem; color: var(--text-sub); text-align: center; }
+    #btn-rename {
+      background: transparent; border: none;
+      color: var(--text-sub); cursor: pointer;
+      font-size: 0.85rem; margin-left: 4px; vertical-align: middle;
+    }
+    #btn-htp-waiting {
+      margin-top: 24px;
+      background: transparent;
+      border: var(--bw) solid var(--border);
+      color: var(--text);
+      padding: 8px 22px; border-radius: 0;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.78rem; cursor: pointer;
+      transition: box-shadow 0.1s;
+    }
+    #btn-htp-waiting:hover { box-shadow: var(--shadow-sm); }
+    .btn-cancel {
+      flex: 1; background: var(--bg);
+      border: var(--bw) solid var(--border);
+      color: var(--text); padding: 10px; border-radius: 0;
+      font-family: 'Inter', sans-serif; font-size: 0.9rem; cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
   <!-- LOGIN -->
   <div id="login-screen">
-    <h2>🎯 Trivia</h2>
+    <h2>MEDIA TRIVIA</h2>
     <p class="login-sub">Ingresá tus datos para participar</p>
     <input class="login-input" type="text" id="login-name" placeholder="Tu nombre" autocomplete="off">
     <input class="login-input" type="tel" id="login-doc" placeholder="Últimos 3 números de tu DNI"
       maxlength="3" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
       oninput="this.value=this.value.replace(/\D/g,'').slice(0,3)">
-    <button class="login-btn" id="login-btn" onclick="doLogin()">Ingresar →</button>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">INGRESAR →</button>
     <div class="login-error" id="login-error">Completá ambos campos (DNI: solo 3 dígitos)</div>
   </div>
 
@@ -125,39 +330,39 @@
   <div id="room-full-screen">
     <div class="rf-icon">🎟️</div>
     <h2>Cupo completo</h2>
-    <p>Hemos alcanzado el máximo de <span id="room-full-max">150</span> participantes.<br>¡Seguí el juego en la pantalla grande!</p>
+    <p>Hemos alcanzado el máximo de <span id="room-full-max">200</span> participantes.<br>¡Seguí el juego en la pantalla grande!</p>
   </div>
 
   <!-- ESPERA -->
   <div id="waiting" style="display:none">
     <div class="logo-container" id="waiting-logo"><img id="waiting-logo-img" src="" alt="Logo"></div>
-    <h2 id="waiting-title">🎵 Media Trivia</h2>
+    <h2 id="waiting-title">🎵 MEDIA TRIVIA</h2>
     <p id="waiting-subtitle">Esperando la próxima pregunta...</p>
     <div id="vote-cd-section" style="display:none;margin-top:24px;text-align:center">
-      <div id="vote-cd-label" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;transition:color 0.4s">Próxima ronda en</div>
-      <div id="vote-cd-display" style="font-size:3rem;font-weight:700;line-height:1;transition:color 0.4s"></div>
+      <div id="vote-cd-label" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;color:var(--text-sub)">Próxima ronda en</div>
+      <div id="vote-cd-display" style="font-family:'Anton',sans-serif;font-size:4rem;line-height:1;color:var(--accent)"></div>
     </div>
-    <button onclick="document.getElementById('htp-modal').style.display='flex'" style="margin-top:28px;background:transparent;border:1px solid #2a2a2a;color:#444;padding:8px 22px;border-radius:20px;font-size:0.78rem;cursor:pointer">📖 ¿Cómo se juega?</button>
-    <div id="player-edit-section" style="display:none;margin-top:20px">
-      <div style="font-size:0.75rem;color:#555;text-align:center">
+    <button id="btn-htp-waiting" onclick="document.getElementById('htp-modal').style.display='flex'">📖 ¿Cómo se juega?</button>
+    <div id="player-edit-section">
+      <div id="player-greeting">
         Jugando como <strong id="player-name-display"></strong>
-        <button onclick="showRenameForm()" style="background:transparent;border:none;color:#444;cursor:pointer;font-size:0.85rem;margin-left:4px;vertical-align:middle">✏️</button>
+        <button id="btn-rename" onclick="showRenameForm()">✏️</button>
       </div>
       <div id="rename-form">
         <input class="login-input" type="text" id="rename-input" placeholder="Nuevo nombre" onkeydown="if(event.key==='Enter')submitRename()">
         <div style="display:flex;gap:8px;margin-top:8px">
-          <button class="login-btn" onclick="submitRename()" style="margin-top:0;padding:10px;flex:1">Guardar</button>
-          <button onclick="hideRenameForm()" style="flex:1;background:#2a2a2a;border:none;color:#aaa;padding:10px;border-radius:10px;font-size:0.9rem;cursor:pointer">Cancelar</button>
+          <button class="login-btn" onclick="submitRename()" style="margin-top:0;padding:10px;flex:1">GUARDAR</button>
+          <button class="btn-cancel" onclick="hideRenameForm()">Cancelar</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL CÓMO SE JUEGA (local, sin servidor) -->
-  <div id="htp-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:300;flex-direction:column;align-items:center;justify-content:center;padding:20px">
-    <div style="background:#1a1a1a;border-radius:16px;padding:24px 20px;max-width:380px;width:100%">
-      <div id="htp-modal-title" style="font-size:1rem;font-weight:700;margin-bottom:18px;letter-spacing:1px">CÓMO SE JUEGA</div>
-      <div style="display:flex;flex-direction:column;gap:14px;font-size:0.88rem;line-height:1.4">
+  <!-- MODAL CÓMO SE JUEGA -->
+  <div id="htp-modal">
+    <div id="htp-inner">
+      <div id="htp-modal-title">CÓMO SE JUEGA</div>
+      <div class="htp-rules">
         <div>📲 Escaneá el QR y elegí tu apodo</div>
         <div>🎬 Ronda nueva cada 30 min — cada una tiene su ganador</div>
         <div>✅ Gana quien más preguntas acierta</div>
@@ -165,7 +370,7 @@
         <div>🏆 Premio por ronda + gran premio de la noche al que más acumule en toda la jornada</div>
         <div>📍 Para llevarte el premio tenés que estar presente en el club</div>
       </div>
-      <button onclick="document.getElementById('htp-modal').style.display='none'" style="width:100%;margin-top:22px;background:#2a2a2a;border:none;color:#fff;padding:12px;border-radius:10px;font-size:0.9rem;cursor:pointer">Cerrar</button>
+      <button class="btn-secondary" onclick="document.getElementById('htp-modal').style.display='none'">CERRAR</button>
     </div>
   </div>
 
@@ -173,11 +378,11 @@
   <div id="ranking-modal">
     <div id="ranking-modal-inner">
       <div style="display:flex;gap:8px;margin-bottom:16px">
-        <button class="rm-tab active" id="tab-round" onclick="showRankingTab('round')">🏆 Ronda</button>
-        <button class="rm-tab" id="tab-night" onclick="showRankingTab('night')">🌙 Noche</button>
+        <button class="rm-tab active" id="tab-round" onclick="showRankingTab('round')">🏆 RONDA</button>
+        <button class="rm-tab" id="tab-night" onclick="showRankingTab('night')">🌙 NOCHE</button>
       </div>
       <div id="ranking-modal-list"></div>
-      <button onclick="document.getElementById('ranking-modal').style.display='none'" style="width:100%;margin-top:16px;background:#2a2a2a;border:none;color:#fff;padding:12px;border-radius:10px;font-size:0.9rem;cursor:pointer">Cerrar</button>
+      <button class="btn-secondary" onclick="document.getElementById('ranking-modal').style.display='none'">CERRAR</button>
     </div>
   </div>
 
@@ -199,15 +404,15 @@
   <!-- RESPUESTA ENVIADA -->
   <div id="thanks">
     <div class="logo-container" id="thanks-logo"><img id="thanks-logo-img" src="" alt="Logo"></div>
-    <h2 id="thanks-title">⏳ ¡Respuesta enviada!</h2>
+    <h2 id="thanks-title">⏳ ¡RESPUESTA ENVIADA!</h2>
     <p id="thanks-sub">Esperá el resultado en la pantalla grande</p>
   </div>
 
   <!-- PANTALLA FINAL TRIVIA -->
   <div id="final-screen" style="display:none; text-align:center; width:100%; max-width:400px">
     <div style="font-size:2.4rem;margin-bottom:10px">🏆</div>
-    <h2 style="margin-bottom:6px">¡Trivia finalizada!</h2>
-    <p id="final-sub" style="font-size:0.85rem;margin-bottom:24px">Ranking final</p>
+    <h2 style="margin-bottom:6px;font-size:1.8rem">¡TRIVIA FINALIZADA!</h2>
+    <p id="final-sub" style="font-size:0.85rem;margin-bottom:24px;color:var(--text-sub)">Ranking final</p>
     <div id="final-ranking-list"></div>
   </div>
 
@@ -230,7 +435,7 @@
   <div class="player-tag" id="player-tag"></div>
   <div class="powered">Powered by Media Trivia</div>
 
-  <button id="floating-btn" onclick="openRankingModal()">📊 Ver rankings</button>
+  <button id="floating-btn" onclick="openRankingModal()">📊 VER RANKINGS</button>
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
@@ -267,22 +472,17 @@
       isRoomFull = true;
       pendingPlayer = null;
       const btn = document.getElementById('login-btn');
-      if (btn) { btn.disabled = false; btn.textContent = 'Ingresar →'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'INGRESAR →'; }
       hideAll();
       document.getElementById('room-full-max').textContent = max;
       document.getElementById('room-full-screen').style.display = 'block';
     });
 
     let appearance = {
-      bgColor: '#111111', textColor: '#ffffff',
-      accentColor: '#6C63FF', subtitleColor: '#aaaaaa',
-      font: 'Inter', logoUrl: ''
+      bgColor: '#F4E4C5', textColor: '#000000',
+      accentColor: '#D94793', subtitleColor: '#555555',
+      font: 'Anton', logoUrl: ''
     };
-
-    const fontLink = document.createElement('link');
-    fontLink.rel = 'stylesheet';
-    fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Oswald:wght@400;600;700&family=Poppins:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&family=Bebas+Neue&display=swap';
-    document.head.appendChild(fontLink);
 
     let player = JSON.parse(localStorage.getItem('crowdpick_player') || 'null');
 
@@ -293,22 +493,9 @@
       showPlayerUI();
     }
 
-    function doLogin() {
-      const name = document.getElementById('login-name').value.trim();
-      const doc3 = document.getElementById('login-doc').value.trim();
-      if (!name || !/^\d{1,3}$/.test(doc3)) {
-        document.getElementById('login-error').style.display = 'block'; return;
-      }
-      pendingPlayer = { name, docLast3: doc3 };
-      const btn = document.getElementById('login-btn');
-      btn.disabled = true; btn.textContent = 'Ingresando...';
-      socket.emit('join-game', { name, docLast3: doc3 });
-    }
-
     fetch('/api/config').then(r => r.json()).then(cfg => {
       appearance.accentColor = cfg.primaryColor;
       document.documentElement.style.setProperty('--accent', cfg.primaryColor);
-      applyAppearance();
     });
 
     socket.on('appearance-update', (data) => {
@@ -318,21 +505,12 @@
     });
 
     function applyAppearance() {
-      document.body.style.background = appearance.bgColor;
-      document.body.style.color = appearance.textColor;
+      const r = document.documentElement;
+      r.style.setProperty('--accent', appearance.accentColor);
+      if (appearance.bgColor) r.style.setProperty('--bg', appearance.bgColor);
+      if (appearance.textColor) r.style.setProperty('--text', appearance.textColor);
+      if (appearance.subtitleColor) r.style.setProperty('--text-sub', appearance.subtitleColor);
       document.body.style.fontFamily = `'${appearance.font}', sans-serif`;
-      document.getElementById('waiting-title').style.color = appearance.accentColor;
-      document.getElementById('waiting-subtitle').style.color = appearance.subtitleColor;
-      document.getElementById('intro-countdown').style.color = appearance.accentColor;
-      document.getElementById('vote-cd-display').style.color = appearance.accentColor;
-      document.getElementById('vote-cd-label').style.color = appearance.subtitleColor;
-      document.getElementById('htp-modal-title').style.color = appearance.accentColor;
-      document.getElementById('thanks-title').style.color = appearance.accentColor;
-      document.getElementById('thanks-sub').style.color = appearance.subtitleColor;
-      document.getElementById('winner-label').style.color = appearance.subtitleColor;
-      document.getElementById('winner-name').style.color = appearance.accentColor;
-      document.getElementById('winner-announcement').style.borderColor = appearance.accentColor;
-      document.getElementById('winner-announcement').style.background = appearance.accentColor + '22';
       const logos = ['waiting-logo','poll-logo','thanks-logo'];
       const imgs = ['waiting-logo-img','poll-logo-img','thanks-logo-img'];
       logos.forEach((id, i) => {
@@ -341,14 +519,10 @@
         if (appearance.logoUrl) { img.src = appearance.logoUrl; container.style.display = 'block'; }
         else { container.style.display = 'none'; }
       });
-      document.querySelectorAll('.option-btn').forEach(btn => {
-        btn.style.color = appearance.textColor;
-        btn.style.background = appearance.bgColor === '#ffffff' ? '#f5f5f5' : '#222';
-      });
     }
 
     socket.on('update-waiting', ({ title, subtitle }) => {
-      if (title !== undefined) document.getElementById('waiting-title').textContent = title || '🎵 Media Trivia';
+      if (title !== undefined) document.getElementById('waiting-title').textContent = title || '🎵 MEDIA TRIVIA';
       if (subtitle !== undefined) document.getElementById('waiting-subtitle').textContent = subtitle || 'Esperando la próxima pregunta...';
     });
 
@@ -434,17 +608,14 @@
       hideAll();
       document.getElementById('poll-section').style.display = 'flex';
       document.getElementById('poll-title').textContent = poll.title;
-      document.getElementById('poll-title').style.color = appearance.accentColor;
-      document.getElementById('poll-subtitle').style.color = appearance.subtitleColor;
       const container = document.getElementById('options-container');
       container.innerHTML = '';
       poll.options.forEach(opt => {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
-        btn.style.color = appearance.textColor;
         btn.innerHTML = `<div class="option-title">${opt.name}</div>`;
-        btn.onmouseover = () => { btn.style.borderColor = appearance.accentColor; };
-        btn.onmouseout = () => { btn.style.borderColor = '#333'; };
+        btn.onmouseover = () => { btn.style.borderColor = appearance.accentColor; btn.style.boxShadow = `3px 3px 0 ${appearance.accentColor}`; };
+        btn.onmouseout = () => { btn.style.borderColor = ''; btn.style.boxShadow = ''; };
         btn.onclick = () => castVote(opt.id);
         container.appendChild(btn);
       });
@@ -472,8 +643,6 @@
       document.getElementById('winner-name').textContent = winner ? winner.name : '';
       hideAll();
       document.getElementById('winner-announcement').style.display = 'block';
-
-      // Mostrar ranking debajo después de 1.2 segundos
       setTimeout(() => {
         renderVoteRanking();
         if (lastRanking.length) document.getElementById('vote-ranking').style.display = 'block';
@@ -490,9 +659,9 @@
           <div class="vote-rank-row${isMe ? ' me' : ''}">
             <div class="vote-rank-medal">${medals[i] || (i + 1) + '.'}</div>
             <div class="vote-rank-name">${escHtml(p.name)}${isMe ? '<span class="vote-rank-me-tag">← Vos</span>' : ''}</div>
-            <div class="vote-rank-pts" style="text-align:right">
+            <div class="vote-rank-pts">
               <div>${p.score} pts</div>
-              ${p.timeBank ? `<div style="font-size:0.65rem;color:#555">⏱ ${p.timeBank}s</div>` : ''}
+              ${p.timeBank ? `<div style="font-size:0.65rem;opacity:0.6">⏱ ${p.timeBank}s</div>` : ''}
             </div>
           </div>`;
       }).join('');
@@ -502,7 +671,6 @@
 
     socket.on('queue-finished', () => {
       hideAll();
-      // Actualizar subtítulo con posición propia si existe
       if (player && lastRanking.length) {
         const myPos = lastRanking.findIndex(p => p.name === player.name && p.docLast3 === player.docLast3);
         if (myPos >= 0) {
@@ -518,9 +686,9 @@
           <div class="vote-rank-row${isMe ? ' me' : ''}">
             <div class="vote-rank-medal">${medals[i] || (i+1) + '.'}</div>
             <div class="vote-rank-name">${escHtml(p.name)}${isMe ? '<span class="vote-rank-me-tag">← Vos</span>' : ''}</div>
-            <div class="vote-rank-pts" style="text-align:right">
+            <div class="vote-rank-pts">
               <div>${p.score} pts</div>
-              ${p.timeBank ? `<div style="font-size:0.65rem;color:#555">⏱ ${p.timeBank}s</div>` : ''}
+              ${p.timeBank ? `<div style="font-size:0.65rem;opacity:0.6">⏱ ${p.timeBank}s</div>` : ''}
             </div>
           </div>`;
       }).join('');
@@ -539,7 +707,7 @@
       const secs = document.getElementById('vote-timer-secs');
       box.style.display = remaining > 0 ? 'block' : 'none';
       secs.textContent = remaining;
-      secs.style.color = remaining <= 10 ? '#c0392b' : remaining <= 20 ? '#e67e22' : appearance.accentColor;
+      secs.style.color = remaining <= 10 ? '#c0392b' : remaining <= 20 ? '#e67e22' : '';
     });
 
     socket.on('timer-clear', () => { document.getElementById('vote-timer').style.display = 'none'; });
@@ -592,6 +760,7 @@
       document.getElementById('player-name-display').textContent = newName;
       hideRenameForm();
     });
+
     // ── Rankings modal ────────────────────────────────────────────────────────
     function openRankingModal(tab) {
       activeRankingTab = tab || 'round';
@@ -612,7 +781,7 @@
       const data = activeRankingTab === 'round' ? lastRanking : lastNightRanking;
       const list = document.getElementById('ranking-modal-list');
       if (!data || !data.length) {
-        list.innerHTML = '<p style="text-align:center;color:#555;padding:20px 0">Sin participantes aún</p>';
+        list.innerHTML = '<p style="text-align:center;padding:20px 0;color:var(--text-sub)">Sin participantes aún</p>';
         return;
       }
       const medals = ['🥇','🥈','🥉'];
@@ -621,9 +790,9 @@
         return `<div class="vote-rank-row${isMe ? ' me' : ''}">
           <div class="vote-rank-medal">${medals[i] || (i + 1) + '.'}</div>
           <div class="vote-rank-name">${escHtml(p.name)}${isMe ? '<span class="vote-rank-me-tag">← Vos</span>' : ''}</div>
-          <div class="vote-rank-pts" style="text-align:right">
+          <div class="vote-rank-pts">
             <div>${p.score} pts</div>
-            ${p.timeBank ? `<div style="font-size:0.65rem;color:#555">⏱ ${p.timeBank}s</div>` : ''}
+            ${p.timeBank ? `<div style="font-size:0.65rem;opacity:0.6">⏱ ${p.timeBank}s</div>` : ''}
           </div>
         </div>`;
       }).join('');

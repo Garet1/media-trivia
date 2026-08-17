@@ -3,63 +3,145 @@
 <head>
   <meta charset="UTF-8">
   <title>Media Trivia — Display</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
+    /* ── Tokens (pantalla grande → oscuro por defecto) ── */
+    :root {
+      --bg:        #000;
+      --surface:   #111;
+      --text:      #F4E4C5;
+      --text-sub:  #888;
+      --border:    #F4E4C5;
+      --accent:    #D94793;
+      --shadow:    5px 5px 0 #F4E4C5;
+      --shadow-sm: 3px 3px 0 #F4E4C5;
+      --bw:        3px;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      background: #111;
-      color: #fff;
+      background: var(--bg);
+      color: var(--text);
       font-family: 'Inter', sans-serif;
       height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
       padding: 40px;
       transition: background 0.4s, color 0.4s;
     }
+
+    /* ── Waiting ── */
     #waiting { text-align: center; }
     #waiting .logo { margin-bottom: 24px; }
     #waiting .logo img { max-height: 100px; max-width: 300px; object-fit: contain; }
-    #waiting h1 { font-size: 5rem; }
-    #waiting p { font-size: 1.8rem; color: #555; margin-top: 16px; transition: color 0.4s; }
+    #waiting h1 {
+      font-family: 'Anton', sans-serif;
+      font-size: 5.5rem; letter-spacing: 2px;
+      color: var(--accent);
+    }
+    #waiting p { font-size: 1.8rem; color: var(--text-sub); margin-top: 16px; }
     #waiting-cd-section { display: none; margin-top: 40px; margin-bottom: 8px; }
-    #waiting-cd-label { font-size: 1.1rem; color: #555; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px; transition: color 0.4s; }
-    #waiting-cd-display { font-size: 10rem; font-weight: 700; line-height: 1; transition: color 0.4s; }
-    #poll-section { display: none; width: 100%; max-width: 1000px; }
+    #waiting-cd-label {
+      font-family: 'Anton', sans-serif;
+      font-size: 1.1rem; color: var(--text-sub);
+      text-transform: uppercase; letter-spacing: 3px; margin-bottom: 14px;
+    }
+    #waiting-cd-display {
+      font-family: 'Anton', sans-serif;
+      font-size: 11rem; line-height: 1; color: var(--accent);
+    }
+
+    /* QR box en pantalla de espera */
+    .qr-waiting {
+      display: inline-block;
+      margin-top: 36px;
+      border: var(--bw) solid var(--border);
+      box-shadow: var(--shadow-sm);
+      padding: 16px 20px;
+      text-align: center;
+      background: var(--surface);
+    }
+    .qr-waiting img { width: 160px; height: 160px; display: block; }
+    .qr-waiting .qr-scan { font-size: 0.8rem; color: var(--text-sub); margin-top: 10px; letter-spacing: 1px; text-transform: uppercase; }
+    .qr-waiting .qr-url-display { font-family: 'Anton', sans-serif; font-size: 1rem; margin-top: 4px; color: var(--accent); }
+
+    /* ── Poll intro ── */
     #poll-intro { display: none; text-align: center; }
-    #poll-intro .intro-label { font-size: 1.1rem; color: #aaa; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 18px; }
-    #poll-intro h1 { font-size: 2.6rem; font-weight: 700; max-width: 900px; }
-    #poll-intro .intro-countdown { font-size: 6rem; font-weight: 700; margin-top: 36px; transition: color 0.4s; }
+    #poll-intro .intro-label {
+      font-family: 'Anton', sans-serif;
+      font-size: 1rem; color: var(--text-sub);
+      letter-spacing: 3px; text-transform: uppercase; margin-bottom: 18px;
+    }
+    #poll-intro h1 {
+      font-family: 'Anton', sans-serif;
+      font-size: 3rem; max-width: 900px;
+    }
+    #poll-intro .intro-countdown {
+      font-family: 'Anton', sans-serif;
+      font-size: 8rem; margin-top: 36px; color: var(--accent);
+    }
+
+    /* ── Poll section ── */
+    #poll-section { display: none; width: 100%; max-width: 1000px; }
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
     .header-left { display: flex; align-items: center; gap: 20px; }
     .header-logo img { max-height: 60px; max-width: 160px; object-fit: contain; }
-    .poll-title { font-size: 2.2rem; font-weight: 700; transition: color 0.4s; }
-    .qr-box { text-align: center; }
-    .qr-box img { border-radius: 12px; width: 140px; height: 140px; }
-    .qr-label { font-size: 0.85rem; color: #aaa; margin-top: 8px; }
-    .qr-url { font-size: 1rem; font-weight: 600; }
-    .options { display: flex; flex-direction: column; gap: 20px; }
+    .poll-title {
+      font-family: 'Anton', sans-serif;
+      font-size: 2.4rem; letter-spacing: 0.5px;
+    }
+
+    /* Timer */
+    #timer-box {
+      display: none; text-align: center;
+      border: var(--bw) solid var(--border);
+      box-shadow: var(--shadow-sm);
+      padding: 8px 20px;
+      background: var(--surface);
+      min-width: 90px;
+    }
+    #timer-display { font-family: 'Anton', sans-serif; font-size: 3rem; line-height: 1; }
+    .timer-label { font-size: 0.72rem; color: var(--text-sub); margin-top: 2px; letter-spacing: 1px; }
+
+    /* QR in-poll */
+    .qr-box {
+      border: var(--bw) solid var(--border);
+      box-shadow: var(--shadow-sm);
+      padding: 12px 16px; text-align: center;
+      background: var(--surface);
+    }
+    .qr-box img { width: 130px; height: 130px; display: block; }
+    .qr-label { font-size: 0.72rem; color: var(--text-sub); margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .qr-url { font-family: 'Anton', sans-serif; font-size: 0.95rem; margin-top: 4px; color: var(--accent); }
+
+    /* Options */
+    .options { display: flex; flex-direction: column; gap: 16px; }
     .option-row { display: flex; align-items: center; gap: 16px; transition: opacity 0.5s; }
     .option-row.loser { opacity: 0.3; }
     .option-info { width: 260px; flex-shrink: 0; }
-    .option-name { font-size: 1.3rem; font-weight: 700; transition: color 0.5s; }
-    .option-desc { font-size: 0.85rem; margin-top: 4px; transition: color 0.4s; }
-    .bar-container { flex: 1; background: #222; border-radius: 8px; height: 48px; overflow: hidden; transition: background 0.4s; }
-    .bar-fill { height: 100%; border-radius: 8px; transition: width 0.5s ease; min-width: 4px; }
-    .vote-count { width: 80px; text-align: right; font-size: 1.4rem; font-weight: 700; transition: color 0.4s; }
-    .percent { width: 60px; text-align: right; font-size: 1rem; color: #aaa; }
+    .option-name { font-family: 'Anton', sans-serif; font-size: 1.3rem; letter-spacing: 0.3px; }
+    .option-desc { font-size: 0.85rem; margin-top: 4px; color: var(--text-sub); }
+    .bar-container {
+      flex: 1;
+      background: #1a1a1a;
+      border: 2px solid #2a2a2a;
+      height: 48px; overflow: hidden;
+    }
+    .bar-fill { height: 100%; transition: width 0.5s ease; min-width: 4px; background: var(--accent); }
+    .vote-count { width: 80px; text-align: right; font-family: 'Anton', sans-serif; font-size: 1.5rem; color: var(--accent); }
+    .percent { width: 60px; text-align: right; font-size: 0.95rem; color: var(--text-sub); }
     .winner-badge { font-size: 1.5rem; width: 40px; text-align: center; opacity: 0; transition: opacity 0.5s; }
     .option-row.winner .winner-badge { opacity: 1; }
-    .powered { position: fixed; bottom: 14px; right: 20px; font-size: 0.7rem; color: #2a2a2a; }
 
-    /* Modo resultados ocultos */
+    /* Hidden mode */
     @keyframes pulse-vote {
-      0%, 100% { border-color: #2a2a2a; box-shadow: 0 0 0px rgba(0,0,0,0); }
-      50%  { border-color: var(--accent, #6C63FF); box-shadow: 0 0 24px rgba(108,99,255,0.25); }
+      0%, 100% { border-color: #2a2a2a; }
+      50%       { border-color: var(--accent); box-shadow: 0 0 24px rgba(217,71,147,0.2); }
     }
     @keyframes dot-wave {
       0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
-      40%            { transform: scale(1);   opacity: 1; }
+      40%            { transform: scale(1); opacity: 1; }
     }
     .options.hidden-mode {
       display: grid;
@@ -67,16 +149,11 @@
       gap: 20px;
     }
     .options.hidden-mode .option-row {
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      background: #1a1a1a;
-      border: 2px solid #2a2a2a;
-      border-radius: 20px;
-      padding: 36px 24px;
-      min-height: 140px;
-      gap: 0;
+      flex-direction: column; align-items: center;
+      justify-content: center; text-align: center;
+      background: var(--surface);
+      border: var(--bw) solid #2a2a2a;
+      padding: 36px 24px; min-height: 140px; gap: 0;
       animation: pulse-vote 2.4s ease-in-out infinite;
     }
     .options.hidden-mode .option-row:nth-child(2) { animation-delay: 0.4s; }
@@ -92,26 +169,79 @@
     .options.hidden-mode .voting-dots { display: flex; }
     .voting-dots span {
       width: 8px; height: 8px; border-radius: 50%;
-      background: var(--accent, #6C63FF);
+      background: var(--accent);
       animation: dot-wave 1.4s ease-in-out infinite;
     }
     .voting-dots span:nth-child(2) { animation-delay: 0.2s; }
     .voting-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    /* ── HTP overlay ── */
+    #htp-overlay {
+      display: none; position: fixed; inset: 0;
+      background: #000;
+      z-index: 201; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 60px 100px;
+      border: 6px solid var(--accent);
+    }
+    #htp-title {
+      font-family: 'Anton', sans-serif;
+      font-size: 2.6rem; letter-spacing: 3px;
+      color: var(--accent);
+      margin-bottom: 52px; text-align: center;
+    }
+    .htp-rules-display { display: flex; flex-direction: column; gap: 28px; max-width: 960px; width: 100%; }
+    .htp-rules-display div { font-size: 1.55rem; }
+
+    /* ── Ranking overlay ── */
+    #ranking-overlay {
+      display: none; position: fixed; inset: 0;
+      background: #000;
+      z-index: 200; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 60px 80px;
+      border: 6px solid var(--accent);
+    }
+    #ov-title {
+      font-family: 'Anton', sans-serif;
+      font-size: 2.6rem; letter-spacing: 2px;
+      color: var(--accent);
+      margin-bottom: 40px;
+    }
+    #ov-list { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 12px; }
+
+    /* Ranking card */
+    .ov-card {
+      display: flex; align-items: center; gap: 16px;
+      background: var(--surface);
+      border: var(--bw) solid var(--border);
+      padding: 12px 20px;
+    }
+    .ov-medal { font-size: 1.5rem; width: 42px; text-align: center; flex-shrink: 0; }
+    .ov-info { flex: 1; min-width: 0; }
+    .ov-name { font-family: 'Anton', sans-serif; font-size: 1.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ov-bar-wrap { height: 5px; background: #2a2a2a; margin-top: 6px; overflow: hidden; }
+    .ov-bar { height: 100%; background: var(--accent); transition: width 0.6s ease; }
+    .ov-score { min-width: 80px; text-align: right; }
+    .ov-pts { font-family: 'Anton', sans-serif; font-size: 1.6rem; color: var(--accent); }
+    .ov-bank { font-size: 0.75rem; color: var(--text-sub); margin-top: 2px; }
+
+    .powered { position: fixed; bottom: 14px; right: 20px; font-size: 0.7rem; color: #333; }
   </style>
 </head>
 <body>
   <div id="waiting">
     <div class="logo" id="waiting-logo" style="display:none"><img id="waiting-logo-img" src="" alt="Logo"></div>
-    <h1 id="waiting-title">🎵 Media Trivia</h1>
+    <h1 id="waiting-title">🎵 MEDIA TRIVIA</h1>
     <p id="waiting-subtitle">La votación comenzará en breve...</p>
     <div id="waiting-cd-section">
       <div id="waiting-cd-label">Próxima ronda en</div>
       <div id="waiting-cd-display"></div>
     </div>
-    <div style="margin-top:32px">
-      <img id="waiting-qr-img" src="" alt="QR" style="border-radius:12px;width:160px;height:160px">
-      <div style="font-size:0.85rem;color:#aaa;margin-top:8px">Escaneá para votar</div>
-      <div id="waiting-qr-url" style="font-size:1rem;font-weight:600;margin-top:4px"></div>
+    <div class="qr-waiting">
+      <img id="waiting-qr-img" src="/api/qr" alt="QR">
+      <div class="qr-scan">Escaneá para votar</div>
+      <div class="qr-url-display" id="waiting-qr-url"></div>
     </div>
   </div>
 
@@ -127,12 +257,12 @@
         <div class="header-logo" id="poll-logo" style="display:none"><img id="poll-logo-img" src="" alt="Logo"></div>
         <div class="poll-title" id="poll-title"></div>
       </div>
-      <div id="timer-box" style="display:none;text-align:center;min-width:80px">
-        <div id="timer-display" style="font-size:3rem;font-weight:700;line-height:1"></div>
-        <div style="font-size:0.75rem;color:#aaa;margin-top:2px">seg</div>
+      <div id="timer-box">
+        <div id="timer-display"></div>
+        <div class="timer-label">SEG</div>
       </div>
       <div class="qr-box">
-        <img id="qr-img" src="" alt="QR">
+        <img id="qr-img" src="/api/qr" alt="QR">
         <div class="qr-label">Escaneá para votar</div>
         <div class="qr-url" id="qr-url"></div>
       </div>
@@ -141,24 +271,22 @@
   </div>
 
   <!-- CÓMO SE JUEGA OVERLAY -->
-  <div id="htp-overlay" style="display:none;position:fixed;inset:0;background:rgba(10,10,10,0.97);z-index:201;flex-direction:column;align-items:center;justify-content:center;padding:60px 100px">
-    <div style="max-width:960px;width:100%">
-      <div id="htp-title" style="font-size:2.2rem;font-weight:700;letter-spacing:2px;margin-bottom:52px;text-align:center">MEDIA TRIVIA · CÓMO SE JUEGA</div>
-      <div style="display:flex;flex-direction:column;gap:28px">
-        <div style="font-size:1.55rem">📲 Escaneá el QR y elegí tu apodo</div>
-        <div style="font-size:1.55rem">🎬 Ronda nueva cada 30 min — cada una tiene su ganador</div>
-        <div style="font-size:1.55rem">✅ Gana quien más preguntas acierta</div>
-        <div style="font-size:1.55rem">⏱️ ¿Empate? Gana quien respondió más rápido</div>
-        <div style="font-size:1.55rem">🏆 Premio por ronda + gran premio de la noche al que más acumule en toda la jornada</div>
-        <div style="font-size:1.55rem">📍 Para llevarte el premio tenés que estar presente en el club</div>
-      </div>
+  <div id="htp-overlay">
+    <div id="htp-title">MEDIA TRIVIA · CÓMO SE JUEGA</div>
+    <div class="htp-rules-display">
+      <div>📲 Escaneá el QR y elegí tu apodo</div>
+      <div>🎬 Ronda nueva cada 30 min — cada una tiene su ganador</div>
+      <div>✅ Gana quien más preguntas acierta</div>
+      <div>⏱️ ¿Empate? Gana quien respondió más rápido</div>
+      <div>🏆 Premio por ronda + gran premio de la noche al que más acumule en toda la jornada</div>
+      <div>📍 Para llevarte el premio tenés que estar presente en el club</div>
     </div>
   </div>
 
   <!-- RANKING OVERLAY -->
-  <div id="ranking-overlay" style="display:none;position:fixed;inset:0;background:rgba(10,10,10,0.96);z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px 80px">
-    <div style="font-size:2.4rem;font-weight:700;margin-bottom:40px;letter-spacing:1px" id="ov-title">🏆 Ranking</div>
-    <div id="ov-list" style="width:100%;max-width:800px;display:flex;flex-direction:column;gap:14px"></div>
+  <div id="ranking-overlay">
+    <div id="ov-title">🏆 Ranking</div>
+    <div id="ov-list"></div>
   </div>
 
   <div class="powered">Powered by Media Trivia</div>
@@ -171,24 +299,22 @@
     let lastVotes = {};
     let resultsHidden = false;
     let appearance = {
-      bgColor: '#111111', textColor: '#ffffff',
-      accentColor: '#6C63FF', subtitleColor: '#aaaaaa',
-      font: 'Inter', logoUrl: ''
+      bgColor: '#000000', textColor: '#F4E4C5',
+      accentColor: '#D94793', subtitleColor: '#888888',
+      font: 'Anton', logoUrl: ''
     };
     let publicUrl = '';
-    document.getElementById('waiting-qr-img').src = '/api/qr';
+
     fetch('/api/ip').then(r => r.json()).then(d => {
       publicUrl = d.url;
       document.getElementById('waiting-qr-url').textContent = publicUrl;
     });
 
-    // Mantiene despierto el server (free tier de Render duerme tras 15min sin requests)
     setInterval(() => { fetch('/api/ping').catch(() => {}); }, 5 * 60 * 1000);
 
-    // Cargar Google Fonts
     const fontLink = document.createElement('link');
     fontLink.rel = 'stylesheet';
-    fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Oswald:wght@400;600;700&family=Poppins:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&family=Bebas+Neue&display=swap';
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Oswald:wght@400;600;700&family=Poppins:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&family=Bebas+Neue&display=swap';
     document.head.appendChild(fontLink);
 
     fetch('/api/config').then(r => r.json()).then(cfg => {
@@ -207,20 +333,12 @@
     });
 
     function applyAppearance() {
-      document.body.style.background = appearance.bgColor;
-      document.body.style.color = appearance.textColor;
+      const r = document.documentElement;
+      r.style.setProperty('--accent', appearance.accentColor);
+      r.style.setProperty('--bg', appearance.bgColor);
+      r.style.setProperty('--text', appearance.textColor);
+      r.style.setProperty('--text-sub', appearance.subtitleColor);
       document.body.style.fontFamily = `'${appearance.font}', sans-serif`;
-      document.documentElement.style.setProperty('--accent', appearance.accentColor);
-      document.getElementById('waiting-title').style.color = appearance.accentColor;
-      document.getElementById('waiting-subtitle').style.color = appearance.subtitleColor;
-      document.getElementById('qr-url').style.color = appearance.accentColor;
-      document.getElementById('waiting-qr-url').style.color = appearance.accentColor;
-      document.getElementById('intro-countdown').style.color = appearance.accentColor;
-      document.getElementById('waiting-cd-display').style.color = appearance.accentColor;
-      document.getElementById('waiting-cd-label').style.color = appearance.subtitleColor;
-      document.getElementById('htp-title').style.color = appearance.accentColor;
-
-      // Logo
       if (appearance.logoUrl) {
         document.getElementById('waiting-logo-img').src = appearance.logoUrl;
         document.getElementById('waiting-logo').style.display = 'block';
@@ -230,17 +348,12 @@
         document.getElementById('waiting-logo').style.display = 'none';
         document.getElementById('poll-logo').style.display = 'none';
       }
-
-      // Actualizar barras y contadores si hay votación activa
-      document.querySelectorAll('.bar-fill').forEach(bar => {
-        if (!bar.classList.contains('loser-bar')) bar.style.background = appearance.accentColor;
-      });
-      document.querySelectorAll('.vote-count').forEach(el => el.style.color = appearance.accentColor);
-      document.querySelectorAll('.option-desc').forEach(el => el.style.color = appearance.subtitleColor);
+      document.querySelectorAll('.bar-fill').forEach(bar => { bar.style.background = appearance.accentColor; });
+      document.querySelectorAll('.vote-count').forEach(el => { el.style.color = appearance.accentColor; });
     }
 
     socket.on('update-waiting', ({ title, subtitle }) => {
-      if (title !== undefined) document.getElementById('waiting-title').textContent = title || '🎵 Media Trivia';
+      if (title !== undefined) document.getElementById('waiting-title').textContent = title || '🎵 MEDIA TRIVIA';
       if (subtitle !== undefined) document.getElementById('waiting-subtitle').textContent = subtitle || 'La votación comenzará en breve...';
     });
 
@@ -286,7 +399,7 @@
       }
     });
 
-    socket.on('timer-update', ({ remaining, total }) => {
+    socket.on('timer-update', ({ remaining }) => {
       const box = document.getElementById('timer-box');
       const disp = document.getElementById('timer-display');
       box.style.display = remaining > 0 ? 'block' : 'none';
@@ -294,9 +407,7 @@
       disp.style.color = remaining <= 10 ? '#c0392b' : remaining <= 20 ? '#e67e22' : appearance.accentColor;
     });
 
-    socket.on('timer-clear', () => {
-      document.getElementById('timer-box').style.display = 'none';
-    });
+    socket.on('timer-clear', () => { document.getElementById('timer-box').style.display = 'none'; });
 
     let lastRanking = [];
     socket.on('ranking-update', (ranking) => { lastRanking = ranking; });
@@ -306,7 +417,6 @@
       container.classList.remove('hidden-mode');
       resultsHidden = false;
       updateBars(lastVotes);
-
       setTimeout(() => {
         currentOptions.forEach(opt => {
           const row = document.getElementById(`row-${opt.id}`);
@@ -339,20 +449,14 @@
       document.getElementById('ranking-overlay').style.display = 'none';
     });
 
-    function generateQR(url) {
-      document.getElementById('qr-img').src = '/api/qr';
-      document.getElementById('qr-url').textContent = url;
-      document.getElementById('qr-url').style.color = appearance.accentColor;
-    }
-
     function showPoll(poll, votes) {
       currentOptions = poll.options;
       document.getElementById('ranking-overlay').style.display = 'none';
       document.getElementById('waiting').style.display = 'none';
       document.getElementById('poll-section').style.display = 'block';
       document.getElementById('poll-title').textContent = poll.title;
-      document.getElementById('poll-title').style.color = appearance.textColor;
-      generateQR(publicUrl);
+      document.getElementById('qr-img').src = '/api/qr';
+      document.getElementById('qr-url').textContent = publicUrl;
       renderOptions(poll.options, votes);
     }
 
@@ -366,15 +470,15 @@
         row.id = `row-${opt.id}`;
         row.innerHTML = `
           <div class="option-info">
-            <div class="option-name" style="color:${appearance.textColor}">${opt.name}</div>
-            ${opt.description ? `<div class="option-desc" style="color:${appearance.subtitleColor}">${opt.description}</div>` : ''}
+            <div class="option-name">${opt.name}</div>
+            ${opt.description ? `<div class="option-desc">${opt.description}</div>` : ''}
             <div class="voting-dots"><span></span><span></span><span></span></div>
           </div>
           <div class="bar-container">
             <div class="bar-fill" id="bar-${opt.id}" style="width:0%;background:${appearance.accentColor}"></div>
           </div>
           <div class="vote-count" id="count-${opt.id}" style="color:${appearance.accentColor}">0</div>
-          <div class="percent" id="pct-${opt.id}" style="color:${appearance.subtitleColor}">0%</div>
+          <div class="percent" id="pct-${opt.id}">0%</div>
           <div class="winner-badge" id="badge-${opt.id}">🏆</div>
         `;
         container.appendChild(row);
@@ -386,7 +490,6 @@
       const ov = document.getElementById('ranking-overlay');
       const list = document.getElementById('ov-list');
       document.getElementById('ov-title').textContent = label;
-      document.getElementById('ov-title').style.color = appearance.accentColor;
 
       const top = ranking.slice(0, 10);
       const maxScore = Math.max(...top.map(r => r.score), 1);
@@ -396,31 +499,31 @@
         const medal = medals[i] || `${i + 1}.`;
         const pct = Math.round((p.score / maxScore) * 100);
         return `
-          <div style="display:flex;align-items:center;gap:16px;background:#1a1a1a;border-radius:14px;padding:12px 20px">
-            <div style="font-size:1.5rem;width:42px;text-align:center;flex-shrink:0">${medal}</div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:1.15rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
-              <div style="height:6px;background:#2a2a2a;border-radius:4px;margin-top:6px;overflow:hidden">
-                <div style="height:100%;width:${pct}%;background:${appearance.accentColor};border-radius:4px;transition:width 0.6s ease"></div>
+          <div class="ov-card">
+            <div class="ov-medal">${medal}</div>
+            <div class="ov-info">
+              <div class="ov-name">${p.name}</div>
+              <div class="ov-bar-wrap">
+                <div class="ov-bar" style="width:${pct}%;background:${appearance.accentColor}"></div>
               </div>
             </div>
-            <div style="min-width:60px;text-align:right">
-              <div style="font-size:1.5rem;font-weight:700;color:${appearance.accentColor}">${p.score} pts</div>
-              ${p.timeBank ? `<div style="font-size:0.75rem;color:#555;margin-top:2px">⏱ ${p.timeBank}s</div>` : ''}
+            <div class="ov-score">
+              <div class="ov-pts" style="color:${appearance.accentColor}">${p.score} pts</div>
+              ${p.timeBank ? `<div class="ov-bank">⏱ ${p.timeBank}s</div>` : ''}
             </div>
           </div>`;
       };
 
       if (top.length <= 5) {
-        list.style.cssText = 'width:100%;max-width:700px;display:flex;flex-direction:column;gap:12px';
+        list.style.cssText = 'width:100%;max-width:700px;display:flex;flex-direction:column;gap:10px';
         list.innerHTML = top.map(renderItem).join('');
       } else {
         const col1 = top.slice(0, 5);
         const col2 = top.slice(5);
-        list.style.cssText = 'width:100%;max-width:1400px;display:flex;flex-direction:row;gap:32px';
+        list.style.cssText = 'width:100%;max-width:1400px;display:flex;flex-direction:row;gap:28px';
         list.innerHTML =
-          `<div style="flex:1;display:flex;flex-direction:column;gap:12px">${col1.map((p, i) => renderItem(p, i)).join('')}</div>` +
-          `<div style="flex:1;display:flex;flex-direction:column;gap:12px">${col2.map((p, i) => renderItem(p, i + 5)).join('')}</div>`;
+          `<div style="flex:1;display:flex;flex-direction:column;gap:10px">${col1.map((p, i) => renderItem(p, i)).join('')}</div>` +
+          `<div style="flex:1;display:flex;flex-direction:column;gap:10px">${col2.map((p, i) => renderItem(p, i + 5)).join('')}</div>`;
       }
 
       ov.style.display = 'flex';
@@ -428,8 +531,8 @@
 
     socket.on('show-how-to-play', () => { document.getElementById('htp-overlay').style.display = 'flex'; });
     socket.on('hide-how-to-play', () => { document.getElementById('htp-overlay').style.display = 'none'; });
-    socket.on('show-display-ranking', (ranking) => { showRankingOverlay(ranking, '🏆 Ranking'); });
-    socket.on('show-night-ranking', (ranking) => { showRankingOverlay(ranking, '🌙 Ranking — Toda la noche'); });
+    socket.on('show-display-ranking', (ranking) => { showRankingOverlay(ranking, '🏆 RANKING'); });
+    socket.on('show-night-ranking', (ranking) => { showRankingOverlay(ranking, '🌙 RANKING — TODA LA NOCHE'); });
     socket.on('hide-display-ranking', () => { document.getElementById('ranking-overlay').style.display = 'none'; });
 
     let waitingCdTimer = null;
