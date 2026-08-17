@@ -54,12 +54,13 @@
 
     /* QR box en pantalla de espera */
     .qr-waiting {
-      display: inline-block;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
       margin-top: 36px;
       border: var(--bw) solid var(--border);
       box-shadow: var(--shadow-sm);
       padding: 16px 20px;
-      text-align: center;
       background: var(--surface);
     }
     .qr-waiting img { width: 160px; height: 160px; display: block; }
