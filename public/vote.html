@@ -453,10 +453,12 @@
 
     socket.on('connect', () => {
       if (player) socket.emit('join-game', { name: player.name, docLast3: player.docLast3 });
+      else if (pendingPlayer) socket.emit('join-game', { name: pendingPlayer.name, docLast3: pendingPlayer.docLast3 });
     });
 
     socket.on('join-ok', () => {
       isRoomFull = false;
+      if (loginTimeout) { clearTimeout(loginTimeout); loginTimeout = null; }
       if (!pendingPlayer) return;
       player = pendingPlayer;
       pendingPlayer = null;
@@ -470,6 +472,7 @@
 
     socket.on('room-full', ({ max }) => {
       isRoomFull = true;
+      if (loginTimeout) { clearTimeout(loginTimeout); loginTimeout = null; }
       pendingPlayer = null;
       const btn = document.getElementById('login-btn');
       if (btn) { btn.disabled = false; btn.textContent = 'INGRESAR →'; }
@@ -733,6 +736,34 @@
       socket.emit('vote', { optionId, name: player.name, docLast3: player.docLast3 });
       hideAll();
       document.getElementById('thanks').style.display = 'block';
+    }
+
+    // ── Login ────────────────────────────────────────────────────────────────
+    let loginTimeout = null;
+    function doLogin() {
+      const name = document.getElementById('login-name').value.trim().slice(0, 30);
+      const doc3 = document.getElementById('login-doc').value.trim();
+      const errEl = document.getElementById('login-error');
+      if (!name || !/^\d{1,3}$/.test(doc3)) {
+        errEl.style.display = 'block';
+        return;
+      }
+      errEl.style.display = 'none';
+      const btn = document.getElementById('login-btn');
+      btn.disabled = true;
+      btn.textContent = 'Ingresando...';
+      pendingPlayer = { name, docLast3: doc3 };
+      socket.emit('join-game', { name, docLast3: doc3 });
+      if (loginTimeout) clearTimeout(loginTimeout);
+      loginTimeout = setTimeout(() => {
+        if (pendingPlayer) {
+          btn.disabled = false;
+          btn.textContent = 'INGRESAR →';
+          pendingPlayer = null;
+          errEl.textContent = 'Sin respuesta del servidor — intentá de nuevo';
+          errEl.style.display = 'block';
+        }
+      }, 6000);
     }
 
     // ── Cambio de nombre ──────────────────────────────────────────────────────
