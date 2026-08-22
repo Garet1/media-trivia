@@ -510,8 +510,17 @@
     function applyAppearance() {
       const r = document.documentElement;
       r.style.setProperty('--accent', appearance.accentColor);
-      if (appearance.bgColor) r.style.setProperty('--bg', appearance.bgColor);
-      if (appearance.textColor) r.style.setProperty('--text', appearance.textColor);
+      if (appearance.bgColor) {
+        r.style.setProperty('--bg', appearance.bgColor);
+        // Surface = bg shifted slightly so buttons stay distinguishable
+        r.style.setProperty('--surface', appearance.bgColor);
+      }
+      if (appearance.textColor) {
+        r.style.setProperty('--text', appearance.textColor);
+        r.style.setProperty('--border', appearance.textColor);
+        r.style.setProperty('--shadow',    `5px 5px 0 ${appearance.textColor}`);
+        r.style.setProperty('--shadow-sm', `3px 3px 0 ${appearance.textColor}`);
+      }
       if (appearance.subtitleColor) r.style.setProperty('--text-sub', appearance.subtitleColor);
       document.body.style.fontFamily = `'${appearance.font}', sans-serif`;
       const logos = ['waiting-logo','poll-logo','thanks-logo'];
