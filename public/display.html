@@ -67,6 +67,12 @@
     .qr-waiting .qr-scan { font-size: 0.8rem; color: var(--text-sub); margin-top: 10px; letter-spacing: 1px; text-transform: uppercase; }
     .qr-waiting .qr-url-display { font-family: 'Anton', sans-serif; font-size: 1rem; margin-top: 4px; color: var(--accent); }
 
+    /* ── Media ── */
+    #poll-media, #intro-media { width: 100%; text-align: center; margin: 14px 0; display: none; }
+    #poll-media img, #intro-media img { max-width: 100%; max-height: 32vh; object-fit: contain; border: 3px solid var(--accent); }
+    #poll-media iframe, #intro-media iframe { width: 100%; aspect-ratio: 16/9; max-height: 38vh; border: 3px solid var(--accent); }
+    #poll-media audio, #intro-media audio { width: 70%; }
+
     /* ── Poll intro ── */
     #poll-intro { display: none; text-align: center; }
     #poll-intro .intro-label {
@@ -250,6 +256,7 @@
     <div class="intro-label" id="intro-label">Siguiente pregunta</div>
     <h1 id="intro-title"></h1>
     <div class="intro-countdown" id="intro-countdown"></div>
+    <div id="intro-media"></div>
   </div>
 
   <div id="poll-section">
@@ -268,6 +275,7 @@
         <div class="qr-url" id="qr-url"></div>
       </div>
     </div>
+    <div id="poll-media"></div>
     <div class="options" id="options-container"></div>
   </div>
 
@@ -359,13 +367,14 @@
     });
 
     let introCountdownInterval = null;
-    socket.on('poll-intro', ({ title, seconds, label }) => {
+    socket.on('poll-intro', ({ title, seconds, label, media }) => {
       document.getElementById('waiting').style.display = 'none';
       document.getElementById('poll-section').style.display = 'none';
       document.getElementById('ranking-overlay').style.display = 'none';
       document.getElementById('poll-intro').style.display = 'block';
       document.getElementById('intro-label').textContent = label || 'Siguiente pregunta';
       document.getElementById('intro-title').textContent = title;
+      renderMedia(media, 'intro-media');
       let remaining = seconds;
       document.getElementById('intro-countdown').textContent = remaining;
       if (introCountdownInterval) clearInterval(introCountdownInterval);
@@ -450,6 +459,26 @@
       document.getElementById('ranking-overlay').style.display = 'none';
     });
 
+    function toEmbedUrl(url) {
+      const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+      if (yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=1`;
+      return url;
+    }
+
+    function renderMedia(media, containerId) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      if (!media || !media.src) { el.innerHTML = ''; el.style.display = 'none'; return; }
+      el.style.display = 'block';
+      if (media.type === 'image') {
+        el.innerHTML = `<img src="${media.src}" alt="">`;
+      } else if (media.type === 'audio') {
+        el.innerHTML = `<audio controls autoplay src="${media.src}"></audio>`;
+      } else if (media.type === 'video') {
+        el.innerHTML = `<iframe src="${toEmbedUrl(media.src)}" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
+      }
+    }
+
     function showPoll(poll, votes) {
       currentOptions = poll.options;
       document.getElementById('ranking-overlay').style.display = 'none';
@@ -458,6 +487,7 @@
       document.getElementById('poll-title').textContent = poll.title;
       document.getElementById('qr-img').src = '/api/qr';
       document.getElementById('qr-url').textContent = publicUrl;
+      renderMedia(poll.media, 'poll-media');
       renderOptions(poll.options, votes);
     }
 

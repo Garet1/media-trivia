@@ -93,6 +93,13 @@
     .btn-rm-sm:hover { color: #c0392b; }
     .btn-add-opt { background: transparent; border: var(--bw) dashed var(--border); color: var(--sub); padding: 7px 12px; border-radius: 0; cursor: pointer; width: 100%; margin-top: 8px; font-size: 0.85rem; }
     .btn-add-opt:hover { border-color: var(--accent); color: var(--accent); }
+    .q-media-type { width: 100%; background: var(--surface); border: var(--bw) solid var(--border); color: var(--text); padding: 7px 10px; border-radius: 0; font-size: 0.82rem; font-family: 'Inter', sans-serif; margin-top: 10px; cursor: pointer; }
+    .q-media-panel { margin-top: 6px; }
+    .q-media-file { width: 100%; color: var(--sub); font-size: 0.8rem; cursor: pointer; }
+    .q-media-url { width: 100%; background: var(--surface); border: var(--bw) solid var(--border); color: var(--text); padding: 7px 10px; border-radius: 0; font-size: 0.85rem; font-family: 'Inter', sans-serif; }
+    .q-media-url:focus { outline: none; border-color: var(--accent); }
+    .q-media-preview img { max-height: 70px; max-width: 100%; margin-top: 6px; border: 2px solid var(--accent); }
+    .q-media-preview audio { width: 100%; margin-top: 6px; }
     #btn-add-question { background: transparent; border: var(--bw) dashed var(--border); color: var(--sub); padding: 10px; border-radius: 0; cursor: pointer; width: 100%; margin-top: 12px; font-size: 0.9rem; }
     #btn-add-question:hover { border-color: var(--accent); color: var(--accent); }
 
@@ -485,7 +492,7 @@
     // ── Quiz builder ────────────────────────────────────────────────────────
     function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-    function addQuestion(title = '', options = [], correctId = null) {
+    function addQuestion(title = '', options = [], correctId = null, media = null) {
       const qIdx = quizQuestionCount++;
       const defaultOpts = options.length ? options : [
         { id: 'opt0', name: '' }, { id: 'opt1', name: '' }, { id: 'opt2', name: '' }
@@ -499,6 +506,17 @@
           <button class="btn-remove" onclick="removeQuestion(this)">✕ Quitar</button>
         </div>
         <input type="text" class="q-title" placeholder="¿Texto de la pregunta?" value="${escHtml(title)}">
+        <select class="q-media-type" onchange="handleMediaTypeChange(this)">
+          <option value="">Sin media</option>
+          <option value="image">🖼 Imagen</option>
+          <option value="audio">🔊 Audio</option>
+          <option value="video">▶ Video (URL)</option>
+        </select>
+        <div class="q-media-panel" style="display:none">
+          <input type="file" class="q-media-file" accept="image/*" style="display:none" onchange="handleMediaFile(this)">
+          <input type="text" class="q-media-url" placeholder="URL del video (YouTube o .mp4)" style="display:none">
+          <div class="q-media-preview"></div>
+        </div>
         <div class="q-options">
           ${defaultOpts.map((opt, i) => `
             <div class="q-opt-row">
@@ -511,6 +529,64 @@
       `;
       document.getElementById('quiz-questions').appendChild(block);
       renumberQuestions();
+      // Restaurar media al editar un quiz existente
+      if (media && media.type && media.src) {
+        const sel = block.querySelector('.q-media-type');
+        sel.value = media.type;
+        handleMediaTypeChange(sel);
+        if (media.type === 'video') {
+          block.querySelector('.q-media-url').value = media.src;
+        } else {
+          block.dataset.mediaSrc = media.src;
+          const preview = block.querySelector('.q-media-preview');
+          if (media.type === 'image') {
+            preview.innerHTML = `<img src="${media.src}">`;
+          } else {
+            preview.innerHTML = `<audio controls src="${media.src}"></audio>`;
+          }
+        }
+      }
+    }
+
+    function handleMediaTypeChange(select) {
+      const block = select.closest('.q-block');
+      const panel = block.querySelector('.q-media-panel');
+      const fileInput = block.querySelector('.q-media-file');
+      const urlInput = block.querySelector('.q-media-url');
+      const type = select.value;
+      if (!type) {
+        panel.style.display = 'none';
+        block.dataset.mediaSrc = '';
+        block.querySelector('.q-media-preview').innerHTML = '';
+        return;
+      }
+      panel.style.display = 'block';
+      if (type === 'video') {
+        fileInput.style.display = 'none';
+        urlInput.style.display = 'block';
+      } else {
+        fileInput.accept = type === 'image' ? 'image/*' : 'audio/*';
+        fileInput.style.display = 'block';
+        urlInput.style.display = 'none';
+      }
+    }
+
+    function handleMediaFile(input) {
+      const block = input.closest('.q-block');
+      const file = input.files[0];
+      if (!file) return;
+      const type = block.querySelector('.q-media-type').value;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        block.dataset.mediaSrc = e.target.result;
+        const preview = block.querySelector('.q-media-preview');
+        if (type === 'image') {
+          preview.innerHTML = `<img src="${e.target.result}">`;
+        } else {
+          preview.innerHTML = `<audio controls src="${e.target.result}"></audio>`;
+        }
+      };
+      reader.readAsDataURL(file);
     }
 
     function removeQuestion(btn) {
@@ -576,7 +652,12 @@
           if (row.querySelector('.q-correct').checked) correctId = id;
         });
         if (options.length < 2 || !correctId) { allValid = false; return; }
-        questions.push({ title, options, correctId });
+        const mediaType = block.querySelector('.q-media-type').value;
+        const mediaSrc = mediaType === 'video'
+          ? block.querySelector('.q-media-url').value.trim()
+          : (block.dataset.mediaSrc || '');
+        const media = mediaType && mediaSrc ? { type: mediaType, src: mediaSrc } : null;
+        questions.push({ title, options, correctId, media });
       });
       if (!allValid || questions.length !== qBlocks.length) {
         showStatus('⚠️ Cada pregunta necesita texto, mínimo 2 opciones y marcar la respuesta correcta.', false);
@@ -601,7 +682,7 @@
       document.getElementById('quiz-name').value = quiz.name;
       document.getElementById('quiz-questions').innerHTML = '';
       quizQuestionCount = 0;
-      quiz.questions.forEach(q => addQuestion(q.title, q.options, q.correctId));
+      quiz.questions.forEach(q => addQuestion(q.title, q.options, q.correctId, q.media || null));
       document.getElementById('quiz-hide-results').checked = quiz.hideResults || false;
       const hasTimer = quiz.timerSeconds > 0;
       document.getElementById('quiz-timer-check').checked = hasTimer;

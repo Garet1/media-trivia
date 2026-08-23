@@ -204,7 +204,7 @@ function startIntro(introTitle, introLabel, pollData) {
   currentPoll = null;
   if (displayRanking) { displayRanking = false; io.emit('hide-display-ranking'); }
   if (displayNightRanking) { displayNightRanking = false; io.emit('hide-display-ranking'); }
-  pollIntro = { title: introTitle, label: introLabel, seconds: POLL_INTRO_SECONDS };
+  pollIntro = { title: introTitle, label: introLabel, seconds: POLL_INTRO_SECONDS, media: pollData.media || null };
   io.emit('poll-intro', pollIntro);
   introTimer = setTimeout(() => {
     introTimer = null;
@@ -286,7 +286,8 @@ function launchCurrentQueueQuestion() {
     options: question.options,
     correctId: question.correctId,
     hideResults: quiz.hideResults || false,
-    timerSeconds: quiz.timerSeconds || 0
+    timerSeconds: quiz.timerSeconds || 0,
+    media: question.media || null,
   };
   if (queueQuestionIdx === 0) {
     startQuizIntro(quiz.name, pollData);
