@@ -652,9 +652,9 @@
           if (row.querySelector('.q-correct').checked) correctId = id;
         });
         if (options.length < 2 || !correctId) { allValid = false; return; }
-        const mediaType = block.querySelector('.q-media-type').value;
+        const mediaType = block.querySelector('.q-media-type')?.value || '';
         const mediaSrc = mediaType === 'video'
-          ? block.querySelector('.q-media-url').value.trim()
+          ? (block.querySelector('.q-media-url')?.value.trim() || '')
           : (block.dataset.mediaSrc || '');
         const media = mediaType && mediaSrc ? { type: mediaType, src: mediaSrc } : null;
         questions.push({ title, options, correctId, media });
