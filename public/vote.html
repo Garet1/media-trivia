@@ -19,26 +19,6 @@
       --shadow-sm: 3px 3px 0 #000;
       --bw:        3px;
     }
-    @media (prefers-color-scheme: dark) {
-      :root:not([data-theme="light"]) {
-        --bg:        #0c0c0c;
-        --surface:   #111;
-        --text:      #F4E4C5;
-        --text-sub:  #888;
-        --border:    #F4E4C5;
-        --shadow:    5px 5px 0 #F4E4C5;
-        --shadow-sm: 3px 3px 0 #F4E4C5;
-      }
-    }
-    :root[data-theme="dark"] {
-      --bg:        #0c0c0c;
-      --surface:   #111;
-      --text:      #F4E4C5;
-      --text-sub:  #888;
-      --border:    #F4E4C5;
-      --shadow:    5px 5px 0 #F4E4C5;
-      --shadow-sm: 3px 3px 0 #F4E4C5;
-    }
 
     /* ── Base ──────────────────────────────────────────────────────────────── */
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -486,6 +466,7 @@
       accentColor: '#D94793', subtitleColor: '#555555',
       font: 'Anton', logoUrl: ''
     };
+    applyAppearance();
 
     let player = JSON.parse(localStorage.getItem('crowdpick_player') || 'null');
 
